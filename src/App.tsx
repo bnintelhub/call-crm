@@ -5,8 +5,8 @@ import { useAuthStore } from './store/authStore';
 import { ToastContainer } from './components/ui/Toast';
 import Layout from './components/layout/Layout';
 
-// Auth and Public pages removed
-
+// Auth
+import Login from './pages/auth/Login';
 // Dashboards (role-based)
 import AdminDashboard from './pages/dashboard/AdminDashboard';
 import TelecallerDashboard from './pages/dashboard/TelecallerDashboard';
@@ -39,6 +39,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<Login />} />
         
         {/* Protected — any role */}
         <Route element={<Layout requiredRole="ANY" />}>

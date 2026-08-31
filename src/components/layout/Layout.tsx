@@ -41,10 +41,9 @@ export default function Layout({ requiredRole }: { requiredRole?: string }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // if (!isAuthenticated || !token) {
-  //   return <Navigate to="/login" state={{ from: location }} replace />;
-  // }
-
+  if (!isAuthenticated || !token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
   if (requiredRole === 'ADMIN_OR_LEAD' && user?.role === 'TELECALLER') {
     return <Navigate to="/dashboard" replace />;
   }
