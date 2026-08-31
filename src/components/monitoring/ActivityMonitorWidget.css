@@ -1,0 +1,141 @@
+/* ─── Activity Monitor Widget ─────────────────────────────────────────── */
+.activity-monitor {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: all 0.4s ease;
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.am-active {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.am-inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  animation: am-pulse-red 1.5s infinite;
+}
+
+.am-lunch {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.am-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.am-active .am-dot { 
+  background: #ef4444; 
+  position: relative;
+  z-index: 1;
+}
+
+.am-active .am-dot::before,
+.am-active .am-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.4);
+  z-index: -1;
+  animation: recording-pulse 2s infinite ease-out;
+}
+
+.am-active .am-dot::before {
+  width: 14px;
+  height: 14px;
+  animation-delay: 0s;
+}
+
+.am-active .am-dot::after {
+  width: 22px;
+  height: 22px;
+  animation-delay: 1s;
+}
+
+@keyframes recording-pulse {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+}
+.am-inactive .am-dot { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+.am-lunch .am-dot    { background: #eab308; box-shadow: 0 0 6px #eab308; }
+
+.am-time { letter-spacing: 0.05em; font-size: 0.72rem; }
+.am-label { font-size: 0.68rem; opacity: 0.9; }
+
+@keyframes am-pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+  50%       { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+}
+
+/* ─── Auto-logout Overlay ─────────────────────────────────────────────── */
+.am-logout-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: am-fade-in 0.3s ease;
+}
+
+.am-logout-card {
+  background: var(--surface-primary, #1e1e2e);
+  border: 1px solid rgba(239,68,68,0.4);
+  border-radius: 16px;
+  padding: 2.5rem;
+  text-align: center;
+  max-width: 360px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(239,68,68,0.15);
+  animation: am-slide-up 0.3s ease;
+}
+
+.am-logout-icon { color: #ef4444; margin-bottom: 1rem; }
+
+.am-logout-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary, #fff);
+}
+
+.am-logout-card p {
+  color: var(--text-muted, #aaa);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.am-countdown {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #ef4444;
+  margin-bottom: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  animation: am-pulse-red 1s infinite;
+}
+
+.am-stay-btn { width: 100%; padding: 0.75rem; font-size: 0.95rem; }
+
+@keyframes am-fade-in  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes am-slide-up { from { transform: translateY(30px); opacity:0 } to { transform: translateY(0); opacity:1 } }
