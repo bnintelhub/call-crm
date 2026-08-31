@@ -4,7 +4,8 @@ import {
   Layers, Headphones, MoreHorizontal, Search, Download, Plus,
   Users, UserCheck, UserMinus, Award, GraduationCap, BarChart3, Star,
   PhoneCall, Clock, CheckCircle2, AlertCircle, Play, Pause,
-  TrendingUp, FileSpreadsheet, ShieldCheck, Zap, Sparkles, ChevronRight
+  TrendingUp, FileSpreadsheet, ShieldCheck, Zap, Sparkles, ChevronRight,
+  Volume2, MapPin, MessageSquare, Send, Smartphone, FileText
 } from 'lucide-react';
 import './IVRPage.css';
 
@@ -13,11 +14,21 @@ interface IVRPageProps {
 }
 
 export default function IVRPage({ view: propView }: IVRPageProps) {
-  const { tab } = useParams<{ tab: string }>();
+  const { tab, reportType: paramReportType } = useParams<{ tab?: string; reportType?: string }>();
   const currentView = propView || tab || 'allocation-list';
 
+  const reportTypeMap: Record<string, string> = {
+    'one-view': 'One View',
+    'cc-reports': 'CC Reports',
+    'field-reports': 'Field Reports',
+    'digital-engagement': 'Digital Engagement Report',
+    'call-recordings': 'Call Recordings',
+  };
+
+  const selectedReportType = (paramReportType && reportTypeMap[paramReportType]) || 'One View';
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
 
   // Render view-specific content
   const getViewConfig = () => {
@@ -100,19 +111,48 @@ export default function IVRPage({ view: propView }: IVRPageProps) {
             { label: 'Training Hours Logged', value: '340 Hrs', sub: 'This month', icon: <Clock size={22} />, color: 'purple' },
           ],
         };
-      case 'reports':
-        return {
-          title: 'IVR Reports & CDR Analytics',
-          category: 'More',
-          icon: <BarChart3 size={24} className="text-indigo" />,
-          subtitle: 'Comprehensive call detail records, drop-off rates, hourly volume charts, and disposition data.',
-          stats: [
+      case 'reports': {
+        const statsMap: Record<string, { label: string; value: string; sub: string; icon: any; color: string }[]> = {
+          'One View': [
+            { label: 'Total Omni Outreach', value: '84,200', sub: 'Across 4 channels', icon: <Layers size={22} />, color: 'indigo' },
+            { label: 'Overall Resolution', value: '76.4%', sub: '+3.2% vs target', icon: <CheckCircle2 size={22} />, color: 'green' },
+            { label: 'Total Collections', value: '₹1.42 Cr', sub: 'Today across channels', icon: <TrendingUp size={22} />, color: 'amber' },
+            { label: 'Active Channels', value: '4 Modules', sub: 'CC, Field, Digital, IVR', icon: <Zap size={22} />, color: 'cyan' },
+          ],
+          'CC Reports': [
             { label: 'Total Call Minutes', value: '48,290 Min', sub: 'Today', icon: <Clock size={22} />, color: 'indigo' },
             { label: 'First Call Resolution', value: '74.2%', sub: '+2.8% benchmark', icon: <CheckCircle2 size={22} />, color: 'green' },
             { label: 'Abandonment Rate', value: '2.8%', sub: 'Well below 5% target', icon: <AlertCircle size={22} />, color: 'cyan' },
             { label: 'Peak Calling Hour', value: '2 PM - 4 PM', sub: '3,800 calls/hr', icon: <BarChart3 size={22} />, color: 'amber' },
           ],
+          'Field Reports': [
+            { label: 'Field Visits Logged', value: '1,240 Visits', sub: 'Today', icon: <MapPin size={22} />, color: 'indigo' },
+            { label: 'Geo-Verified Rate', value: '98.6%', sub: 'GPS check-ins', icon: <CheckCircle2 size={22} />, color: 'green' },
+            { label: 'Field Cash Collected', value: '₹42.8 Lakh', sub: 'Verified receipts', icon: <TrendingUp size={22} />, color: 'amber' },
+            { label: 'Field PTP Promises', value: '385 PTPs', sub: 'Next 48 hrs', icon: <Clock size={22} />, color: 'cyan' },
+          ],
+          'Digital Engagement Report': [
+            { label: 'Messages Dispatched', value: '1,84,000', sub: 'WhatsApp & SMS', icon: <Send size={22} />, color: 'indigo' },
+            { label: 'Delivery Success Rate', value: '99.1%', sub: 'High delivery', icon: <CheckCircle2 size={22} />, color: 'green' },
+            { label: 'Payment Link CTR', value: '24.6%', sub: 'Self-serve clicks', icon: <Smartphone size={22} />, color: 'cyan' },
+            { label: 'Digital Recoveries', value: '₹18.5 Lakh', sub: 'Instant gateway', icon: <TrendingUp size={22} />, color: 'amber' },
+          ],
+          'Call Recordings': [
+            { label: 'Total Audio Files', value: '12,960 Calls', sub: 'Cloud recorded', icon: <Volume2 size={22} />, color: 'indigo' },
+            { label: 'Total Duration Logged', value: '584 Hrs', sub: 'Audio archived', icon: <Clock size={22} />, color: 'cyan' },
+            { label: 'AI Audited Sample', value: '1,420 Calls', sub: 'Speech evaluated', icon: <ShieldCheck size={22} />, color: 'green' },
+            { label: 'Average QA Score', value: '94.8%', sub: 'Grade: Excellent', icon: <Star size={22} />, color: 'amber' },
+          ],
         };
+
+        return {
+          title: 'IVR Reports & Analytics',
+          category: 'More',
+          icon: <BarChart3 size={24} className="text-indigo" />,
+          subtitle: `Comprehensive analytics & drill-down records for ${selectedReportType}.`,
+          stats: statsMap[selectedReportType] || statsMap['One View'],
+        };
+      }
       case 'score':
         return {
           title: 'Agent Quality & QA Scorecard',
@@ -472,49 +512,284 @@ export default function IVRPage({ view: propView }: IVRPageProps) {
           </div>
         );
 
-      case 'reports':
+      case 'reports': {
+        const query = searchTerm.toLowerCase();
+
+        // 1. One View
+        if (selectedReportType === 'One View') {
+          const oneViewData = [
+            { channel: 'Contact Center (CC Telecalling)', reach: '48,290 Calls', connected: '32,960 (68.2%)', resolution: '74.2%', collections: '₹64.5 Lakh', ptp: '412', compliance: '99.4%', status: 'Active' },
+            { channel: 'Field Operations (FOS Visits)', reach: '1,420 Visits', connected: '1,240 (87.3%)', resolution: '82.0%', collections: '₹42.8 Lakh', ptp: '385', compliance: '98.6%', status: 'Active' },
+            { channel: 'Digital Engagement (WhatsApp & SMS)', reach: '1,84,000 Pushes', connected: '1,82,344 (99.1%)', resolution: '68.5%', collections: '₹18.5 Lakh', ptp: '520', compliance: '100%', status: 'Active' },
+            { channel: 'Automated Voice IVR Blaster', reach: '22,400 Blasts', connected: '15,680 (70.0%)', resolution: '61.4%', collections: '₹16.2 Lakh', ptp: '210', compliance: '99.8%', status: 'Active' },
+          ].filter((row) => !query || row.channel.toLowerCase().includes(query) || row.collections.toLowerCase().includes(query));
+
+          return (
+            <div className="ivr-table-wrapper">
+              <table className="ivr-table">
+                <thead>
+                  <tr>
+                    <th>Channel / Module</th>
+                    <th>Total Reach</th>
+                    <th>Connected / Visited</th>
+                    <th>Resolution Rate</th>
+                    <th>Total Collections</th>
+                    <th>PTP Generated</th>
+                    <th>Compliance</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {oneViewData.map((row) => (
+                    <tr key={row.channel}>
+                      <td style={{ fontWeight: 600 }}>{row.channel}</td>
+                      <td>{row.reach}</td>
+                      <td style={{ fontWeight: 600, color: '#10b981' }}>{row.connected}</td>
+                      <td style={{ fontWeight: 600 }}>{row.resolution}</td>
+                      <td style={{ fontWeight: 700, color: '#059669' }}>{row.collections}</td>
+                      <td style={{ fontWeight: 600 }}>{row.ptp}</td>
+                      <td>
+                        <span className="ivr-badge ivr-badge-online">{row.compliance}</span>
+                      </td>
+                      <td>
+                        <button className="ivr-btn ivr-btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
+                          <Download size={13} /> Export
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+
+        // 2. CC Reports
+        if (selectedReportType === 'CC Reports') {
+          const ccReportsData = [
+            { date: '31 Aug 2026 (Today)', dials: '18,940', answered: '12,960 (68.4%)', drops: '340 (1.8%)', aht: '3m 42s', talk: '584 hrs', ptp: '412' },
+            { date: '30 Aug 2026', dials: '19,210', answered: '13,100 (68.2%)', drops: '380 (1.9%)', aht: '3m 50s', talk: '602 hrs', ptp: '428' },
+            { date: '29 Aug 2026', dials: '17,890', answered: '12,450 (69.6%)', drops: '310 (1.7%)', aht: '3m 35s', talk: '558 hrs', ptp: '394' },
+            { date: '28 Aug 2026', dials: '18,450', answered: '12,780 (69.2%)', drops: '290 (1.5%)', aht: '3m 48s', talk: '579 hrs', ptp: '406' },
+            { date: '27 Aug 2026', dials: '16,720', answered: '11,340 (67.8%)', drops: '420 (2.5%)', aht: '3m 55s', talk: '512 hrs', ptp: '365' },
+          ].filter((row) => !query || row.date.toLowerCase().includes(query));
+
+          return (
+            <div className="ivr-table-wrapper">
+              <table className="ivr-table">
+                <thead>
+                  <tr>
+                    <th>Report Date</th>
+                    <th>Total Dials</th>
+                    <th>Answered Calls</th>
+                    <th>Drop-off Count</th>
+                    <th>Avg Handle Time (AHT)</th>
+                    <th>Total Talk Time</th>
+                    <th>PTP Conversions</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ccReportsData.map((rep) => (
+                    <tr key={rep.date}>
+                      <td style={{ fontWeight: 600 }}>{rep.date}</td>
+                      <td>{rep.dials}</td>
+                      <td style={{ fontWeight: 600, color: '#10b981' }}>{rep.answered}</td>
+                      <td style={{ color: '#f59e0b' }}>{rep.drops}</td>
+                      <td>{rep.aht}</td>
+                      <td>{rep.talk}</td>
+                      <td style={{ fontWeight: 700 }}>{rep.ptp}</td>
+                      <td>
+                        <button className="ivr-btn ivr-btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
+                          <Download size={13} /> Export
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+
+        // 3. Field Reports
+        if (selectedReportType === 'Field Reports') {
+          const fieldReportsData = [
+            { area: 'Delhi NCR - Central & South', agents: 18, accounts: '340', visits: '312 (91.8%)', geo: '99.2%', receipts: '84', collected: '₹12.4 Lakh', ptpRate: '78.5%' },
+            { area: 'Mumbai Metro - Western Suburbs', agents: 22, accounts: '410', visits: '385 (93.9%)', geo: '98.7%', receipts: '112', collected: '₹16.8 Lakh', ptpRate: '82.1%' },
+            { area: 'Bengaluru East & Whitefield', agents: 14, accounts: '280', visits: '260 (92.8%)', geo: '99.5%', receipts: '72', collected: '₹8.2 Lakh', ptpRate: '76.4%' },
+            { area: 'Hyderabad Zone - Cyberabad', agents: 12, accounts: '210', visits: '195 (92.8%)', geo: '98.0%', receipts: '54', collected: '₹5.4 Lakh', ptpRate: '74.2%' },
+          ].filter((row) => !query || row.area.toLowerCase().includes(query));
+
+          return (
+            <div className="ivr-table-wrapper">
+              <table className="ivr-table">
+                <thead>
+                  <tr>
+                    <th>Field Cluster / Area</th>
+                    <th>FOS Agents</th>
+                    <th>Target Accounts</th>
+                    <th>Visits Completed</th>
+                    <th>Geo Check-ins</th>
+                    <th>Receipts Issued</th>
+                    <th>Cash Collected</th>
+                    <th>PTP Rate</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fieldReportsData.map((row) => (
+                    <tr key={row.area}>
+                      <td style={{ fontWeight: 600 }}>{row.area}</td>
+                      <td>{row.agents} FOS</td>
+                      <td>{row.accounts}</td>
+                      <td style={{ fontWeight: 600, color: '#10b981' }}>{row.visits}</td>
+                      <td>{row.geo}</td>
+                      <td>{row.receipts}</td>
+                      <td style={{ fontWeight: 700, color: '#059669' }}>{row.collected}</td>
+                      <td style={{ fontWeight: 600 }}>{row.ptpRate}</td>
+                      <td>
+                        <button className="ivr-btn ivr-btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
+                          <Download size={13} /> Export
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+
+        // 4. Digital Engagement Report
+        if (selectedReportType === 'Digital Engagement Report') {
+          const digitalData = [
+            { channel: 'WhatsApp Pay & Reminder Bot', volume: '78,500', delivered: '99.4%', readRate: '86.2%', ctr: '32.4%', conversions: '1,420', collected: '₹9.4 Lakh' },
+            { channel: 'Overdue SMS Link Blasts', volume: '84,000', delivered: '98.9%', readRate: '72.0%', ctr: '18.5%', conversions: '960', collected: '₹5.8 Lakh' },
+            { channel: 'RCS Interactive Carousel Cards', volume: '12,500', delivered: '99.0%', readRate: '88.5%', ctr: '38.2%', conversions: '310', collected: '₹2.1 Lakh' },
+            { channel: 'Automated Voice IVR Blaster', volume: '9,000', delivered: '96.5%', readRate: '68.0%', ctr: '14.2%', conversions: '180', collected: '₹1.2 Lakh' },
+          ].filter((row) => !query || row.channel.toLowerCase().includes(query));
+
+          return (
+            <div className="ivr-table-wrapper">
+              <table className="ivr-table">
+                <thead>
+                  <tr>
+                    <th>Campaign Channel</th>
+                    <th>Broadcast Volume</th>
+                    <th>Delivered (%)</th>
+                    <th>Read Rate</th>
+                    <th>Payment Link CTR</th>
+                    <th>Instant Conversions</th>
+                    <th>Amount Collected</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {digitalData.map((row) => (
+                    <tr key={row.channel}>
+                      <td style={{ fontWeight: 600 }}>{row.channel}</td>
+                      <td>{row.volume}</td>
+                      <td style={{ fontWeight: 600, color: '#10b981' }}>{row.delivered}</td>
+                      <td>{row.readRate}</td>
+                      <td style={{ fontWeight: 600, color: '#2563eb' }}>{row.ctr}</td>
+                      <td style={{ fontWeight: 600 }}>{row.conversions}</td>
+                      <td style={{ fontWeight: 700, color: '#059669' }}>{row.collected}</td>
+                      <td>
+                        <button className="ivr-btn ivr-btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
+                          <Download size={13} /> Export
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+
+        // 5. Call Recordings
+        const recordingsData = [
+          { id: 'REC-90412', time: '14:32:10 Today', borrower: 'Kalyani Kumari', phone: '+91 98765 43210', telecaller: 'Pooja Sharma', duration: '4m 12s', disposition: 'PTP Promised', sentiment: 'Positive', score: '98%' },
+          { id: 'REC-90408', time: '14:28:45 Today', borrower: 'Ravi Teja', phone: '+91 97654 32109', telecaller: 'Rohan Verma', duration: '2m 45s', disposition: 'Call Back Requested', sentiment: 'Neutral', score: '92%' },
+          { id: 'REC-90401', time: '14:15:20 Today', borrower: 'Anil Deshmukh', phone: '+91 96543 21098', telecaller: 'Sneha Kapoor', duration: '5m 18s', disposition: 'Settlement Discussion', sentiment: 'Positive', score: '96%' },
+          { id: 'REC-90395', time: '13:58:02 Today', borrower: 'Meera Nair', phone: '+91 95432 10987', telecaller: 'Vikram Singh', duration: '1m 20s', disposition: 'Dispute / Escalated', sentiment: 'Escalated', score: '88%' },
+          { id: 'REC-90388', time: '13:42:15 Today', borrower: 'Suresh Raina', phone: '+91 94321 09876', telecaller: 'Ananya Roy', duration: '3m 50s', disposition: 'Paid via Link', sentiment: 'Positive', score: '99%' },
+        ].filter((row) => !query || row.borrower.toLowerCase().includes(query) || row.telecaller.toLowerCase().includes(query) || row.id.toLowerCase().includes(query));
+
         return (
           <div className="ivr-table-wrapper">
             <table className="ivr-table">
               <thead>
                 <tr>
-                  <th>Report Date</th>
-                  <th>Total Dials</th>
-                  <th>Answered Calls</th>
-                  <th>Drop-off Count</th>
-                  <th>Avg Queue Duration</th>
-                  <th>Total Talk Time</th>
-                  <th>PTP Conversions</th>
+                  <th>Call ID & Time</th>
+                  <th>Borrower Details</th>
+                  <th>Telecaller</th>
+                  <th>Duration</th>
+                  <th>Disposition</th>
+                  <th>Sentiment</th>
+                  <th>QA Score</th>
+                  <th>Recording / Audio</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { date: '31 Aug 2026 (Today)', dials: '18,940', answered: '12,960 (68.4%)', drops: '340 (1.8%)', wait: '14 sec', talk: '584 hrs', ptp: '412' },
-                  { date: '30 Aug 2026', dials: '19,210', answered: '13,100 (68.2%)', drops: '380 (1.9%)', wait: '16 sec', talk: '602 hrs', ptp: '428' },
-                  { date: '29 Aug 2026', dials: '17,890', answered: '12,450 (69.6%)', drops: '310 (1.7%)', wait: '13 sec', talk: '558 hrs', ptp: '394' },
-                  { date: '28 Aug 2026', dials: '18,450', answered: '12,780 (69.2%)', drops: '290 (1.5%)', wait: '15 sec', talk: '579 hrs', ptp: '406' },
-                  { date: '27 Aug 2026', dials: '16,720', answered: '11,340 (67.8%)', drops: '420 (2.5%)', wait: '18 sec', talk: '512 hrs', ptp: '365' },
-                ].map((rep) => (
-                  <tr key={rep.date}>
-                    <td style={{ fontWeight: 600 }}>{rep.date}</td>
-                    <td>{rep.dials}</td>
-                    <td style={{ fontWeight: 600, color: '#10b981' }}>{rep.answered}</td>
-                    <td style={{ color: '#f59e0b' }}>{rep.drops}</td>
-                    <td>{rep.wait}</td>
-                    <td>{rep.talk}</td>
-                    <td style={{ fontWeight: 700 }}>{rep.ptp}</td>
-                    <td>
-                      <button className="ivr-btn ivr-btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
-                        <Download size={13} /> Export
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {recordingsData.map((rec) => {
+                  const isPlaying = playingAudioId === rec.id;
+                  return (
+                    <tr key={rec.id}>
+                      <td>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{rec.id}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{rec.time}</div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{rec.borrower}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{rec.phone}</div>
+                      </td>
+                      <td>
+                        <div className="ivr-user-cell">
+                          <div className="ivr-avatar">{rec.telecaller.charAt(0)}</div>
+                          <span className="ivr-user-name">{rec.telecaller}</span>
+                        </div>
+                      </td>
+                      <td>{rec.duration}</td>
+                      <td>
+                        <span className="ivr-badge ivr-badge-online">{rec.disposition}</span>
+                      </td>
+                      <td>
+                        <span style={{
+                          color: rec.sentiment === 'Positive' ? '#10b981' : rec.sentiment === 'Escalated' ? '#ef4444' : '#f59e0b',
+                          fontWeight: 600,
+                          fontSize: '0.75rem'
+                        }}>
+                          {rec.sentiment}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 700, color: '#2563eb' }}>{rec.score}</td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => setPlayingAudioId(isPlaying ? null : rec.id)}
+                          className={`ivr-btn ${isPlaying ? 'ivr-btn-primary' : 'ivr-btn-secondary'}`}
+                          style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem', gap: '0.35rem' }}
+                        >
+                          {isPlaying ? <Pause size={13} /> : <Play size={13} />}
+                          <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+                        </button>
+                      </td>
+                      <td>
+                        <button className="ivr-btn ivr-btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} title="Download MP3">
+                          <Download size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         );
+      }
 
       case 'score':
         return (
@@ -582,13 +857,21 @@ export default function IVRPage({ view: propView }: IVRPageProps) {
             <span>IVR Call</span>
             <ChevronRight size={14} />
             <span>{config.category}</span>
+            {currentView === 'reports' && (
+              <>
+                <ChevronRight size={14} />
+                <span>Reports</span>
+              </>
+            )}
             <ChevronRight size={14} />
-            <span className="ivr-breadcrumbs-current">{config.title}</span>
+            <span className="ivr-breadcrumbs-current">
+              {currentView === 'reports' ? selectedReportType : config.title}
+            </span>
           </div>
 
           <h1 className="ivr-title">
             {config.icon}
-            {config.title}
+            {currentView === 'reports' ? selectedReportType : config.title}
           </h1>
           <p className="ivr-subtitle">{config.subtitle}</p>
         </div>
@@ -634,7 +917,7 @@ export default function IVRPage({ view: propView }: IVRPageProps) {
               <Search size={16} className="ivr-search-icon" />
               <input
                 type="text"
-                placeholder={`Search in ${config.title}...`}
+                placeholder={`Search in ${currentView === 'reports' ? selectedReportType : config.title}...`}
                 className="ivr-search-input"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import NavbarStatusToggle from './NavbarStatusToggle';
 import NavbarHelp from './NavbarHelp';
 import OrganizationIdentity from './OrganizationIdentity';
 import UserAvatar from './UserAvatar';
+import { useLiveStatusStore } from '../../store/liveStatusStore';
 import type { User } from '../../types';
 
 interface NavbarActionsProps {
@@ -16,20 +17,20 @@ export const NavbarActions: React.FC<NavbarActionsProps> = ({
   onLogout,
   onHelpClick,
 }) => {
-  const [isOnline, setIsOnline] = useState(false);
+  const { isLive, setLive } = useLiveStatusStore();
 
   return (
     <div className="navbar-actions-container">
       {/* 1. Online/Offline Toggle */}
       <NavbarStatusToggle
-        isOnline={isOnline}
-        onToggle={setIsOnline}
+        isOnline={isLive}
+        onToggle={setLive}
       />
 
       {/* 2. Status Badge */}
-      <div className={`nav-status-badge ${isOnline ? 'badge-online' : 'badge-offline'}`}>
+      <div className={`nav-status-badge ${isLive ? 'badge-online' : 'badge-offline'}`}>
         <span className="nav-status-dot" />
-        <span className="nav-status-text">{isOnline ? 'Online' : 'Offline'}</span>
+        <span className="nav-status-text">{isLive ? 'Online' : 'Offline'}</span>
       </div>
 
       {/* 3. Help Button */}

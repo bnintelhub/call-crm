@@ -19,6 +19,15 @@ import AgentListPage from './pages/agent/AgentListPage';
 import MapAgentsCampaignsPage from './pages/agent/MapAgentsCampaignsPage';
 import CampaignPage from './pages/campaign/CampaignPage';
 
+// Reports Module Pages
+import ReportsLayout from './pages/reports/ReportsLayout';
+import OneViewPage from './pages/reports/OneViewPage';
+import CCReportsPage from './pages/reports/CCReportsPage';
+import FieldReportsPage from './pages/reports/FieldReportsPage';
+import DigitalEngagementPage from './pages/reports/DigitalEngagementPage';
+import CallRecordingsPage from './pages/reports/CallRecordingsPage';
+import WhatsAppMessagesPage from './pages/reports/WhatsAppMessagesPage';
+
 import type { Role } from './types';
 import { LEAD_AND_ABOVE } from './types';
 
@@ -68,6 +77,27 @@ function App() {
           <Route path="/ivr/campaigns" element={<CampaignPage />} />
           <Route path="/ivr/allocation-list" element={<AllocationList />} />
           <Route path="/ivr/upload-allocation" element={<UploadAllocationPage />} />
+          {/* Reports Module */}
+          <Route path="/reports" element={<ReportsLayout />}>
+            <Route index element={<Navigate to="/reports/one-view" replace />} />
+            <Route path="one-view" element={<OneViewPage />} />
+            <Route path="cc-reports" element={<CCReportsPage />} />
+            <Route path="field-reports" element={<FieldReportsPage />} />
+            <Route path="digital-engagement" element={<DigitalEngagementPage />} />
+            <Route path="call-recordings" element={<CallRecordingsPage />} />
+          </Route>
+          <Route path="/reports/whatsapp-messages" element={<WhatsAppMessagesPage />} />
+          <Route path="/whatsapp-messages" element={<WhatsAppMessagesPage />} />
+
+          {/* IVR Reports Route Mapping to ReportsLayout */}
+          <Route path="/ivr/reports" element={<ReportsLayout />}>
+            <Route index element={<Navigate to="/reports/one-view" replace />} />
+            <Route path="one-view" element={<OneViewPage />} />
+            <Route path="cc-reports" element={<CCReportsPage />} />
+            <Route path="field-reports" element={<FieldReportsPage />} />
+            <Route path="digital-engagement" element={<DigitalEngagementPage />} />
+            <Route path="call-recordings" element={<CallRecordingsPage />} />
+          </Route>
           <Route path="/ivr/:tab" element={<IVRPage />} />
         </Route>
 

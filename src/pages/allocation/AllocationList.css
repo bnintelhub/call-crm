@@ -613,7 +613,15 @@
 }
 
 .alloc-floating-support-btn.active {
-  background: var(--bg-tertiary);
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.alloc-floating-support-btn.active:hover {
+  background: #1d4ed8;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.55);
 }
 
 /* Support Popup Card */
@@ -673,17 +681,24 @@
 }
 
 .alloc-support-close {
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   color: #ffffff;
   cursor: pointer;
-  padding: 4px;
-  opacity: 0.8;
-  transition: opacity 0.15s ease;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: all 0.15s ease;
 }
 
 .alloc-support-close:hover {
-  opacity: 1;
+  background: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  transform: scale(1.08);
 }
 
 .alloc-support-body {

@@ -5,14 +5,16 @@ import {
   LayoutDashboard, Upload, Target, Wallet, Building2, Users, BarChart3,
   PhoneCall, AlertTriangle, FileSpreadsheet, X, MessageSquare,
   Activity, ClipboardList, TrendingUp, UserCircle, FilePlus, Send, History,
-  ChevronDown, Layers, UserCheck, Award, GraduationCap, Star, MoreHorizontal, Headphones
+  ChevronDown, Layers, UserCheck, Award, GraduationCap, Star, MoreHorizontal, Headphones,
+  MapPin, Volume2
 } from 'lucide-react';
 import './Layout.css';
 
 export interface NavSubItem {
-  path: string;
+  path?: string;
   label: string;
   icon?: React.ReactNode;
+  children?: { path: string; label: string; icon?: React.ReactNode }[];
 }
 
 export interface NavItem {
@@ -60,7 +62,17 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
           icon: <MoreHorizontal size={20} />,
           children: [
             { path: '/ivr/training', label: 'Training', icon: <GraduationCap size={16} /> },
-            { path: '/ivr/reports', label: 'Reports', icon: <BarChart3 size={16} /> },
+            {
+              label: 'Reports',
+              icon: <BarChart3 size={16} />,
+              children: [
+                { path: '/ivr/reports/one-view', label: 'One View', icon: <Layers size={16} /> },
+                { path: '/ivr/reports/cc-reports', label: 'CC Reports', icon: <PhoneCall size={16} /> },
+                { path: '/ivr/reports/field-reports', label: 'Field Reports', icon: <MapPin size={16} /> },
+                { path: '/ivr/reports/digital-engagement', label: 'Digital Engagement Report', icon: <Send size={16} /> },
+                { path: '/ivr/reports/call-recordings', label: 'Call Recordings', icon: <Volume2 size={16} /> },
+              ],
+            },
             { path: '/ivr/score', label: 'Score', icon: <Star size={16} /> },
           ],
         },
@@ -233,6 +245,12 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
         if (item.children?.some((child) => child.path === currentPath)) {
           toOpen[item.label] = true;
         }
+        item.children?.forEach((child) => {
+          if (child.children?.some((sub) => sub.path === currentPath)) {
+            toOpen[item.label] = true;
+            toOpen[child.label] = true;
+          }
+        });
       });
     });
 
@@ -280,7 +298,11 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
                 {section.items.map((item) => {
                   if (item.children && item.children.length > 0) {
                     const isDropdownOpen = !!openDropdowns[item.label];
-                    const isChildActive = item.children.some((child) => location.pathname === child.path);
+                    const isChildActive = item.children.some(
+                      (child) =>
+                        location.pathname === child.path ||
+                        child.children?.some((sub) => location.pathname === sub.path)
+                    );
 
                     return (
                       <li key={item.label} className="nav-dropdown-item">
@@ -299,11 +321,59 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
                         <div className={`nav-dropdown-menu ${isDropdownOpen ? 'show' : ''}`}>
                           <ul className="nav-sub-list">
                             {item.children.map((child) => {
+                              // If child has nested children (e.g. Reports -> One View, CC Reports, Field Reports...)
+                              if (child.children && child.children.length > 0) {
+                                const isSubOpen = !!openDropdowns[child.label];
+                                const isSubActive = child.children.some((sc) => location.pathname === sc.path);
+
+                                return (
+                                  <li key={child.label} className="nav-sub-item">
+                                    <button
+                                      type="button"
+                                      className={`nav-sub-link nav-sub-dropdown-trigger ${isSubActive ? 'active' : ''} ${isSubOpen ? 'sub-open' : ''}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleDropdown(child.label);
+                                      }}
+                                    >
+                                      {child.icon && <span className="nav-sub-icon">{child.icon}</span>}
+                                      <span className="nav-sub-label">{child.label}</span>
+                                      <span className={`nav-chevron ${isSubOpen ? 'rotated' : ''}`} style={{ marginLeft: 'auto' }}>
+                                        <ChevronDown size={13} />
+                                      </span>
+                                    </button>
+
+                                    <div className={`nav-nested-menu ${isSubOpen ? 'show' : ''}`}>
+                                      <ul className="nav-nested-list">
+                                        {child.children.map((sub) => {
+                                          const isSubCurrent = location.pathname === sub.path;
+                                          return (
+                                            <li key={sub.path} className="nav-nested-item">
+                                              <Link
+                                                to={sub.path}
+                                                className={`nav-nested-link ${isSubCurrent ? 'active' : ''}`}
+                                                onClick={() => {
+                                                  if (window.innerWidth <= 768) toggleSidebar();
+                                                }}
+                                              >
+                                                {sub.icon && <span className="nav-nested-icon">{sub.icon}</span>}
+                                                <span className="nav-nested-label">{sub.label}</span>
+                                                {isSubCurrent && <span className="nav-active-dot" />}
+                                              </Link>
+                                            </li>
+                                          );
+                                        })}
+                                      </ul>
+                                    </div>
+                                  </li>
+                                );
+                              }
+
                               const isCurrent = location.pathname === child.path;
                               return (
-                                <li key={child.path} className="nav-sub-item">
+                                <li key={child.path || child.label} className="nav-sub-item">
                                   <Link
-                                    to={child.path}
+                                    to={child.path || '#'}
                                     className={`nav-sub-link ${isCurrent ? 'active' : ''}`}
                                     onClick={() => {
                                       if (window.innerWidth <= 768) toggleSidebar();

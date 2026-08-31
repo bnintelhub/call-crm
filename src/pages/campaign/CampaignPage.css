@@ -258,32 +258,10 @@
   overflow: hidden;
 }
 
-.campaign-stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
-}
-
-.campaign-stat-card.stat-indigo::before { background: var(--accent-primary); }
-.campaign-stat-card.stat-emerald::before { background: var(--accent-success); }
-.campaign-stat-card.stat-cyan::before { background: var(--accent-info); }
-.campaign-stat-card.stat-blue::before { background: #3b82f6; }
-.campaign-stat-card.stat-amber::before { background: var(--accent-warning); }
-.campaign-stat-card.stat-purple::before { background: #a855f7; }
-
 .campaign-stat-card:hover {
   border-color: var(--border-active);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md), var(--shadow-glow);
-}
-
-.campaign-stat-card:hover::before {
-  opacity: 1;
+  box-shadow: var(--shadow-md);
 }
 
 .campaign-stat-top {
