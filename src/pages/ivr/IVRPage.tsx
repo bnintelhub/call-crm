@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Layers, Headphones, MoreHorizontal, Search, Download, Plus,
-  Users, UserCheck, Award, GraduationCap, BarChart3, Star,
+  Users, UserCheck, UserMinus, Award, GraduationCap, BarChart3, Star,
   PhoneCall, Clock, CheckCircle2, AlertCircle, Play, Pause,
   TrendingUp, FileSpreadsheet, ShieldCheck, Zap, Sparkles, ChevronRight
 } from 'lucide-react';
@@ -58,7 +58,7 @@ export default function IVRPage({ view: propView }: IVRPageProps) {
             { label: 'Total Groups', value: '8 Groups', sub: 'Dialing pools', icon: <Users size={22} />, color: 'indigo' },
             { label: 'Online Agents', value: '52 Agents', sub: 'Ready for calls', icon: <CheckCircle2 size={22} />, color: 'green' },
             { label: 'Mapped Telecallers', value: '84 Agents', sub: '100% capacity', icon: <UserCheck size={22} />, color: 'cyan' },
-            { label: 'Avg Queue Wait Time', value: '14s', sub: '-3s from yesterday', icon: <TrendingUp size={22} />, color: 'purple' },
+            { label: 'Unallocated Agents', value: '0 Agents', sub: 'Available to assign', icon: <UserMinus size={22} />, color: 'amber' },
           ],
         };
       case 'campaigns':
