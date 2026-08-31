@@ -4,7 +4,6 @@ import {
   ArrowLeft, Search, ArrowUpDown, ChevronDown,
   Inbox, CheckCircle2, Edit2, MoreHorizontal, Trash2
 } from 'lucide-react';
-import AgentNavbar from '../../components/agent/AgentNavbar';
 import AssignCampaignModal from '../../components/agent/AssignCampaignModal';
 import './MapAgentsCampaignsPage.css';
 
@@ -203,9 +202,6 @@ export const MapAgentsCampaignsPage: React.FC = () => {
           <span>{toastMessage}</span>
         </div>
       )}
-
-      {/* 1. Top Navbar */}
-      <AgentNavbar />
 
       <div className="map-campaigns-content-body">
         {/* 2. Page Header */}
