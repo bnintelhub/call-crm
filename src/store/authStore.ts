@@ -25,9 +25,9 @@ const mockUser: User = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      token: 'mock-token-123',
-      user: mockUser,
-      isAuthenticated: true,
+      token: null,
+      user: null,
+      isAuthenticated: false,
       setAuth: (token, user) => set({ token, user, isAuthenticated: true }),
       logout: () => set({ token: null, user: null, isAuthenticated: false }),
       updateUser: (user) => set({ user }),

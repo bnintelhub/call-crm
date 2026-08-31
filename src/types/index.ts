@@ -14,17 +14,21 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export interface User {
   id: string;
+  employeeId?: string;
   name: string;
   email: string;
   phone?: string;
   role: Role;
-  isActive: boolean;
+  isActive?: boolean;
+  status?: string;
   tokenVersion?: number;
   profilePic?: string;
   teamLeadId?: string;
   teamLead?: { id: string; name: string };
   operationsManagerId?: string;
   operationsManager?: { id: string; name: string };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {

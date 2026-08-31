@@ -5,12 +5,14 @@ import { socketService } from '../../services/socketService';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import MobileBottomNav from './MobileBottomNav';
+import FloatingSupport from '../allocation/FloatingSupport';
 import './Layout.css';
 
 export default function Layout({ requiredRole }: { requiredRole?: string }) {
   const { isAuthenticated, user, token } = useAuthStore();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
 
   const isTelecallerMobile = user?.role === 'TELECALLER';
 
@@ -41,10 +43,9 @@ export default function Layout({ requiredRole }: { requiredRole?: string }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // if (!isAuthenticated || !token) {
-  //   return <Navigate to="/login" state={{ from: location }} replace />;
-  // }
-
+  if (!isAuthenticated || !token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
   if (requiredRole === 'ADMIN_OR_LEAD' && user?.role === 'TELECALLER') {
     return <Navigate to="/dashboard" replace />;
   }
@@ -58,12 +59,21 @@ export default function Layout({ requiredRole }: { requiredRole?: string }) {
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       
       <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-        <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <Header
+          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          onHelpClick={() => setIsSupportOpen(true)}
+        />
         
         <div className={`content-wrapper ${isTelecallerMobile ? 'has-bottom-nav' : ''}`}>
           <Outlet />
         </div>
       </main>
+
+      {/* Global BN Associates Support Floating Button & Widget on Every Page */}
+      <FloatingSupport
+        isOpenExternal={isSupportOpen}
+        onToggleExternal={() => setIsSupportOpen(!isSupportOpen)}
+      />
 
       {/* Mobile Bottom Nav — Telecaller only */}
       <MobileBottomNav />
