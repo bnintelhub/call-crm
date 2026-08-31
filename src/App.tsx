@@ -16,6 +16,7 @@ import IVRPage from './pages/ivr/IVRPage';
 import AllocationList from './pages/allocation/AllocationList';
 import UploadAllocationPage from './pages/allocation/UploadAllocationPage';
 import AgentListPage from './pages/agent/AgentListPage';
+import MapAgentsCampaignsPage from './pages/agent/MapAgentsCampaignsPage';
 import CampaignPage from './pages/campaign/CampaignPage';
 
 import type { Role } from './types';
@@ -55,7 +56,13 @@ function App() {
           <Route path="/upload-allocation" element={<UploadAllocationPage />} />
           <Route path="/agents" element={<AgentListPage />} />
           <Route path="/agent-list" element={<AgentListPage />} />
+          <Route path="/agent/map-campaigns" element={<MapAgentsCampaignsPage />} />
+          <Route path="/agents/map-campaigns" element={<MapAgentsCampaignsPage />} />
+          <Route path="/map-agents-campaigns" element={<MapAgentsCampaignsPage />} />
+          <Route path="/map-agents" element={<MapAgentsCampaignsPage />} />
           <Route path="/ivr/agent-list" element={<AgentListPage />} />
+          <Route path="/ivr/agent-groups" element={<MapAgentsCampaignsPage />} />
+          <Route path="/ivr/map-agents" element={<MapAgentsCampaignsPage />} />
           <Route path="/campaigns" element={<CampaignPage />} />
           <Route path="/campaign" element={<CampaignPage />} />
           <Route path="/ivr/campaigns" element={<CampaignPage />} />
