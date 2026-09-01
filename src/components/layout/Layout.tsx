@@ -5,6 +5,7 @@ import { socketService } from '../../services/socketService';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import MobileBottomNav from './MobileBottomNav';
+import FloatingAction from './FloatingAction';
 import './Layout.css';
 
 export default function Layout({ requiredRole }: { requiredRole?: string }) {
@@ -66,6 +67,9 @@ export default function Layout({ requiredRole }: { requiredRole?: string }) {
 
       {/* Mobile Bottom Nav — Telecaller only */}
       <MobileBottomNav />
+
+      {/* Global Floating Action Button */}
+      <FloatingAction />
     </div>
   );
 }

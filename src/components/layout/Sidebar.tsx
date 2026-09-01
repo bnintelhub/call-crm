@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import {
@@ -11,12 +12,21 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
   const { user } = useAuthStore();
   const location = useLocation();
 
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    // Auto-expand if on that route
+    if (location.pathname.startsWith('/my-data')) {
+      setExpanded(prev => ({ ...prev, '/my-data': true }));
+    }
+  }, [location.pathname]);
+
   const getNavSections = () => {
     const role = user?.role;
 
 
 
-    const sections: { title: string; items: { path: string; label: string; icon: React.ReactNode }[] }[] = [];
+    const sections: { title: string; items: { path: string; label: string; icon: React.ReactNode; subItems?: any[] }[] }[] = [];
 
     if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
       sections.push(
@@ -145,14 +155,23 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
           title: 'MAIN',
           items: [
             { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-            { path: '/my-data', label: 'My Calling Data', icon: <PhoneCall size={20} /> },
+            { 
+              path: '/my-data', 
+              label: 'My Calling Data', 
+              icon: <PhoneCall size={20} />,
+              subItems: [
+                { path: '/my-data', label: 'All Accounts', query: 'tab=All', default: true },
+                { path: '/my-data?tab=FollowUp', label: 'Follow up Accounts', query: 'tab=FollowUp', default: false },
+                { path: '/my-data?tab=Expired', label: 'Expired Accounts', query: 'tab=Expired', default: false },
+              ]
+            },
           ]
         },
         {
           title: 'REPORTS',
           items: [
             { path: '/call-history', label: 'Call History', icon: <History size={20} /> },
-            { path: '/eod-submit', label: 'Submit EOD', icon: <ClipboardList size={20} /> },
+            { path: '/submit-eod', label: 'Submit EOD', icon: <ClipboardList size={20} /> },
           ]
         },
         {
@@ -169,14 +188,11 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
 
   return (
     <>
-      {/* Mobile overlay */}
-      <div
-        className={`sidebar-overlay ${isOpen ? 'active' : ''}`}
+      <div 
+        className={`sidebar-overlay ${isOpen ? 'active' : ''}`} 
         onClick={toggleSidebar}
       />
-
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-        {/* Sidebar Header */}
         <div className="sidebar-header">
           <div className="sidebar-brand">
             <div className="brand-logo">BN</div>
@@ -190,25 +206,58 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="sidebar-nav">
           {getNavSections().map((section) => (
             <div key={section.title} className="nav-section-group">
               <div className="nav-section-label">{section.title}</div>
               <ul>
-                {section.items.map((item) => (
+                {section.items.map((item: any) => (
                   <li key={item.path}>
                     <Link
                       to={item.path}
-                      className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
-                      onClick={() => {
-                        if (window.innerWidth <= 768) toggleSidebar();
+                      className={`nav-link ${location.pathname === item.path || location.pathname.startsWith(item.path + '/') ? 'active' : ''}`}
+                      onClick={(e) => {
+                        if (item.subItems) {
+                          setExpanded(prev => ({ ...prev, [item.path]: !prev[item.path] }));
+                        }
+                        if (window.innerWidth <= 768 && !item.subItems) toggleSidebar();
                       }}
                     >
                       <span className="nav-icon">{item.icon}</span>
-                      <span className="nav-label">{item.label}</span>
-                      {location.pathname === item.path && <span className="nav-active-dot" />}
+                      <span className="nav-label" style={{ flex: 1 }}>{item.label}</span>
+                      {item.subItems && (
+                        <span style={{ display: 'flex', alignItems: 'center' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expanded[item.path] ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                        </span>
+                      )}
+                      {!item.subItems && (location.pathname === item.path || location.pathname.startsWith(item.path + '/')) && <span className="nav-active-dot" />}
                     </Link>
+                    {item.subItems && expanded[item.path] && (
+                      <ul style={{ listStyle: 'none', paddingLeft: '3.25rem', marginTop: '0.25rem', marginBottom: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {item.subItems.map((sub: any) => (
+                          <li key={sub.path}>
+                            <Link 
+                              to={sub.path}
+                              style={{ 
+                                textDecoration: 'none', 
+                                color: location.search.includes(sub.query) || (!location.search && sub.default) ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                fontSize: '0.8rem',
+                                fontWeight: location.search.includes(sub.query) || (!location.search && sub.default) ? '600' : '400',
+                                display: 'block',
+                                transition: 'color 0.2s'
+                              }}
+                              onClick={() => {
+                                if (window.innerWidth <= 768) toggleSidebar();
+                              }}
+                            >
+                              {sub.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -12,6 +12,11 @@ import AdminDashboard from './pages/dashboard/AdminDashboard';
 import TelecallerDashboard from './pages/dashboard/TelecallerDashboard';
 import OperationsManagerDashboard from './pages/dashboard/OperationsManagerDashboard';
 import TeamLeadDashboard from './pages/dashboard/TeamLeadDashboard';
+import MyData from './pages/dashboard/MyData';
+import BorrowerDetails from './pages/dashboard/BorrowerDetails';
+import Profile from './pages/profile/Profile';
+import WhatsAppMessages from './pages/dashboard/WhatsAppMessages';
+import PriorityTasks from './pages/dashboard/PriorityTasks';
 
 import type { Role } from './types';
 import { LEAD_AND_ABOVE } from './types';
@@ -44,6 +49,11 @@ function App() {
         {/* Protected — any role */}
         <Route element={<Layout requiredRole="ANY" />}>
           <Route path="/dashboard" element={<DashboardRouter />} />
+          <Route path="/my-data" element={<MyData />} />
+          <Route path="/borrower/:id" element={<BorrowerDetails />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/whatsapp-messages" element={<WhatsAppMessages />} />
+          <Route path="/priority-tasks" element={<PriorityTasks />} />
         </Route>
 
         {/* Catch-all */}

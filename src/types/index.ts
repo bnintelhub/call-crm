@@ -14,6 +14,7 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export interface User {
   id: string;
+  employeeId?: string;
   name: string;
   email: string;
   phone?: string;

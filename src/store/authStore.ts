@@ -6,9 +6,14 @@ interface AuthState {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
+  isOnline: boolean;
+  activeBreak: string | null;
+  breakStartTime: number | null;
   setAuth: (token: string, user: User) => void;
   logout: () => void;
   updateUser: (user: User) => void;
+  setIsOnline: (val: boolean) => void;
+  setActiveBreak: (breakName: string | null) => void;
 }
 
 const mockUser: User = {
@@ -28,9 +33,18 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       isAuthenticated: false,
+      isOnline: false,
+      activeBreak: null,
+      breakStartTime: null,
       setAuth: (token, user) => set({ token, user, isAuthenticated: true }),
-      logout: () => set({ token: null, user: null, isAuthenticated: false }),
+      logout: () => set({ token: null, user: null, isAuthenticated: false, isOnline: false, activeBreak: null, breakStartTime: null }),
       updateUser: (user) => set({ user }),
+      setIsOnline: (val) => set({ isOnline: val, activeBreak: null, breakStartTime: null }),
+      setActiveBreak: (breakName) => set({ 
+        activeBreak: breakName, 
+        breakStartTime: breakName ? Date.now() : null,
+        isOnline: false 
+      }),
     }),
     {
       name: 'design-crm-auth-mock',

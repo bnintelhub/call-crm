@@ -5,15 +5,8 @@ import { Menu, LogOut, Search, Sun, Moon, Shield, ChevronLeft, ChevronRight } fr
 import NotificationBell from '../ui/NotificationBell';
 import ActivityMonitorWidget from '../monitoring/ActivityMonitorWidget';
 import Modal from '../ui/Modal';
-import { useRef, useEffect, useState, useCallback } from 'react';
-import { searchApi } from '../../services/api';
-
-interface SearchResult {
-  loans: { id: string; loanNumber: string; borrowerName: string; allocationStatus: string }[];
-  users: { id: string; name: string; email: string; role: string }[];
-  companies: { id: string; name: string; isActive: boolean }[];
-  pages: { title: string; path: string }[];
-}
+import { useRef, useEffect, useState } from 'react';
+import { HelpCircle, ChevronDown } from 'lucide-react';
 
 const PAGE_ROUTES = [
   { title: 'Dashboard', path: '/', keywords: ['home', 'main', 'dashboard'] },
@@ -52,63 +45,37 @@ export default function Header({ toggleSidebar }: { toggleSidebar: () => void })
     setShowImageModal(false);
   }, [location.pathname]);
 
-  // Search State
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult>({ loans: [], users: [], companies: [], pages: [] });
-  const [isSearching, setIsSearching] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+  // Allocator Dropdown
+  const [showAllocatorDropdown, setShowAllocatorDropdown] = useState(false);
+  const allocatorRef = useRef<HTMLDivElement>(null);
+  const searchParams = new URLSearchParams(location.search);
+  const currentAllocator = searchParams.get('allocator');
+  
+  const allocators = [
+    { name: 'Moneyview', color: '#10b981', textColor: '#047857' },
+    { name: 'Kissht', color: '#3b82f6', textColor: '#1d4ed8' },
+    { name: 'Ring', color: '#6366f1', textColor: '#4338ca' },
+    { name: 'Udaan', color: '#f59e0b', textColor: '#b45309' },
+    { name: 'TVS Credit', color: '#ef4444', textColor: '#b91c1c' },
+    { name: 'Mpokket', color: '#8b5cf6', textColor: '#6d28d9' }
+  ];
 
-  // Debounced Search
-  useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults({ loans: [], users: [], companies: [], pages: [] });
-      setIsSearching(false);
-      return;
-    }
+  // Online Status (now from global store)
+  const { isOnline, setIsOnline, activeBreak } = useAuthStore();
 
-    setIsSearching(true);
-    const delay = setTimeout(async () => {
-      try {
-        const q = query.toLowerCase();
-        // Local search for pages
-        const matchedPages = PAGE_ROUTES.filter(p => 
-          p.title.toLowerCase().includes(q) || 
-          p.keywords.some(k => k.includes(q))
-        ).slice(0, 3); // Max 3 page results
-
-        // Backend search
-        const data = await searchApi.globalSearch(query);
-        
-        setResults({
-          ...data,
-          pages: matchedPages
-        });
-      } catch (err) {
-        console.error('Search error:', err);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 400);
-
-    return () => clearTimeout(delay);
-  }, [query]);
-
-  // Click outside to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
+      if (allocatorRef.current && !allocatorRef.current.contains(event.target as Node)) {
+        setShowAllocatorDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSearchResultClick = (path: string) => {
-    setShowDropdown(false);
-    setQuery('');
-    navigate(path);
+  const handleSelectAllocator = (name: string) => {
+    setShowAllocatorDropdown(false);
+    navigate(`/my-data?allocator=${name}&tab=All`);
   };
 
   useEffect(() => {
@@ -202,108 +169,103 @@ export default function Header({ toggleSidebar }: { toggleSidebar: () => void })
         <div className="header-greeting">
           <span className="greeting-text">{getGreeting()},</span>
           <span className="greeting-name">{user?.name}</span>
-          {user?.role && (
-            <span className={`badge ${roleBadgeClass[user.role] || 'badge-info'}`} style={{ marginLeft: '0.5rem', fontSize: '0.65rem' }}>
-              <Shield size={9} /> {user.role.replace('_', ' ')}
-            </span>
-          )}
         </div>
       </div>
 
-      <div className="header-right">
-        {/* Search */}
-        <div className="header-search" ref={searchRef}>
-          <Search size={16} className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Search loans, users, companies..." 
-            className="search-input"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setShowDropdown(true);
+      <div className="header-right" style={{ gap: '1rem' }}>
+        
+        {/* Online/Offline Toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div 
+            onClick={() => {
+              if (activeBreak) {
+                // Clicking the toggle when on break cancels the break and goes online
+                setIsOnline(true);
+              } else {
+                setIsOnline(!isOnline);
+              }
             }}
-            onFocus={() => {
-              if (query.length >= 2) setShowDropdown(true);
+            style={{
+              width: '36px', height: '20px', borderRadius: '10px',
+              background: isOnline ? '#10b981' : '#d1d5db',
+              position: 'relative', cursor: 'pointer', transition: 'background 0.3s'
             }}
-          />
+          >
+            <div style={{
+              width: '16px', height: '16px', borderRadius: '50%', background: 'white',
+              position: 'absolute', top: '2px', left: isOnline ? '18px' : '2px',
+              transition: 'left 0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+            }} />
+          </div>
+          {activeBreak ? (
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#2563eb', background: '#dbeafe', padding: '0.25rem 0.75rem', borderRadius: '1rem' }}>
+              {activeBreak}
+            </span>
+          ) : (
+            <span style={{ fontSize: '0.875rem', fontWeight: '600', color: isOnline ? '#10b981' : '#ef4444' }}>
+              {isOnline ? 'Online' : 'Offline'}
+            </span>
+          )}
+        </div>
+
+        {/* Help */}
+        <button style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+          <HelpCircle size={18} />
+          <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>Help</span>
+        </button>
+
+        {/* Allocator Switcher */}
+        <div style={{ position: 'relative' }} ref={allocatorRef}>
+          <button 
+            onClick={() => setShowAllocatorDropdown(!showAllocatorDropdown)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.4rem 0.75rem', borderRadius: '0.5rem',
+              border: currentAllocator ? '1px solid var(--border-color)' : '1px dashed #f97316',
+              background: 'var(--bg-card)', color: currentAllocator ? 'var(--text-primary)' : '#f97316',
+              fontSize: '0.875rem', fontWeight: '600', cursor: 'pointer'
+            }}
+          >
+            {currentAllocator ? (
+              <>
+                <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: allocators.find(a => a.name === currentAllocator)?.color || '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '10px' }}>
+                  {currentAllocator.charAt(0)}
+                </div>
+                {currentAllocator}
+                <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+              </>
+            ) : (
+              'Select Allocator'
+            )}
+          </button>
           
-          {showDropdown && query.length >= 2 && (
-            <div className="search-dropdown">
-              {isSearching ? (
-                <div className="search-status">Searching...</div>
-              ) : (
-                <>
-                  {results.pages.length > 0 && (
-                    <div className="search-category">
-                      <div className="search-category-title">Pages</div>
-                      {results.pages.map(page => (
-                        <div 
-                          key={page.path} 
-                          className="search-result-item"
-                          onClick={() => handleSearchResultClick(page.path)}
-                        >
-                          <span className="search-item-primary">{page.title}</span>
-                          <span className="search-item-secondary">Navigation</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {results.loans.length > 0 && (
-                    <div className="search-category">
-                      <div className="search-category-title">Loans</div>
-
-                      {results.loans.map(loan => (
-                        <div 
-                          key={loan.id} 
-                          className="search-result-item"
-                          onClick={() => handleSearchResultClick(`/loans/${loan.id}`)}
-                        >
-                          <span className="search-item-primary">{loan.loanNumber}</span>
-                          <span className="search-item-secondary">{loan.borrowerName}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {results.users.length > 0 && (
-                    <div className="search-category">
-                      <div className="search-category-title">Users</div>
-                      {results.users.map(u => (
-                        <div 
-                          key={u.id} 
-                          className="search-result-item"
-                          onClick={() => handleSearchResultClick(`/users?search=${encodeURIComponent(u.name)}`)}
-                        >
-                          <span className="search-item-primary">{u.name}</span>
-                          <span className="search-item-secondary">{u.role}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {results.companies.length > 0 && (
-                    <div className="search-category">
-                      <div className="search-category-title">Companies</div>
-                      {results.companies.map(c => (
-                        <div 
-                          key={c.id} 
-                          className="search-result-item"
-                          onClick={() => handleSearchResultClick(`/companies`)}
-                        >
-                          <span className="search-item-primary">{c.name}</span>
-                          <span className="search-item-secondary">{c.isActive ? 'Active' : 'Inactive'}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {results.loans.length === 0 && results.users.length === 0 && results.companies.length === 0 && results.pages.length === 0 && (
-                    <div className="search-status">No results found</div>
-                  )}
-                </>
-              )}
+          {showAllocatorDropdown && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 0.5rem)', right: '0',
+              width: '320px', background: 'var(--bg-card)', borderRadius: '0.75rem',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid var(--border-color)',
+              padding: '1rem', zIndex: 50
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                {allocators.map(alloc => (
+                  <button
+                    key={alloc.name}
+                    onClick={() => handleSelectAllocator(alloc.name)}
+                    style={{
+                      padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center', gap: '0.25rem', cursor: 'pointer',
+                      transition: 'all 0.2s', width: '100%'
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.borderColor = alloc.color; e.currentTarget.style.boxShadow = `0 0 0 1px ${alloc.color}`; }}
+                    onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}
+                  >
+                    <span style={{ color: alloc.textColor, fontWeight: '700', fontSize: '0.875rem' }}>
+                      {alloc.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
