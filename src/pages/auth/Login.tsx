@@ -20,16 +20,37 @@ export default function Login() {
     e.preventDefault();
     if (!email || !password) return;
 
-    const role: Role = email.toLowerCase().includes('supervisor') ? 'TEAM_LEAD' : 'TELECALLER';
+    const emailLower = email.toLowerCase();
+    let role: Role = 'TELECALLER';
+    let name = 'Demo Telecaller';
+    let landing = from === '/dashboard' || from === '/' ? '/dashboard' : from;
+
+    if (emailLower.includes('superadmin') || emailLower.includes('super@') || emailLower.startsWith('admin@')) {
+      role = 'SUPER_ADMIN';
+      name = 'BN Orbit Super Admin';
+      landing = '/superadmin/dashboard';
+    } else if (
+      emailLower.includes('supervisor') ||
+      emailLower.includes('teamlead') ||
+      emailLower.includes('manager')
+    ) {
+      role = 'TEAM_LEAD';
+      name = 'Demo Supervisor';
+      landing = '/dashboard';
+    } else {
+      role = 'TELECALLER';
+      name = 'Demo Telecaller';
+      landing = '/dashboard';
+    }
 
     // Generate a mock user based on selected role
     const mockUser: User = {
       id: `mock-user-${Date.now()}`,
-      name: role === 'TELECALLER' ? 'Demo Telecaller' : 'Demo Supervisor',
+      name: name,
       email: email,
       role: role,
       isActive: true,
-      profilePic: `https://ui-avatars.com/api/?name=Demo+${role === 'TELECALLER' ? 'Telecaller' : 'Supervisor'}&background=random`
+      profilePic: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
     };
 
     const mockToken = `mock-token-${Date.now()}`;
@@ -37,8 +58,8 @@ export default function Login() {
     // Set authentication state
     setAuth(mockToken, mockUser);
     
-    // Navigate to dashboard
-    navigate(from, { replace: true });
+    // Navigate to appropriate landing page
+    navigate(landing, { replace: true });
   };
 
   return (
@@ -86,8 +107,31 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="login-footer">
-          Forgot your password? Contact your administrator
+        <div className="login-footer" style={{ marginTop: '1rem', fontSize: '0.82rem', color: 'var(--text-muted, #94a3b8)' }}>
+          <div style={{ marginBottom: '0.5rem', fontWeight: 500 }}>Quick Test Roles:</div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              type="button"
+              onClick={() => { setEmail('superadmin@bnorbit.com'); setPassword('password123'); }}
+              style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(99, 102, 241, 0.4)', background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8', cursor: 'pointer', fontSize: '0.75rem' }}
+            >
+              👑 Super Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail('supervisor@bnorbit.com'); setPassword('password123'); }}
+              style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.4)', background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', cursor: 'pointer', fontSize: '0.75rem' }}
+            >
+              👔 Supervisor
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail('telecaller@bnorbit.com'); setPassword('password123'); }}
+              style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.4)', background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', cursor: 'pointer', fontSize: '0.75rem' }}
+            >
+              📞 Telecaller
+            </button>
+          </div>
         </div>
       </div>
     </div>
