@@ -1,5 +1,5 @@
 import React from 'react';
-import SidebarBase from '../../components/layout/Sidebar';
+import SidebarBase from '../shared/Sidebar';
 
 interface SupervisorSidebarProps {
   isOpen: boolean;
