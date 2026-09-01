@@ -1,27 +1,26 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import { useThemeStore } from './store/themeStore';
-import { useAuthStore } from './store/authStore';
 import { ToastContainer } from './components/shared/Toast';
-import Layout from './layouts/shared/Layout';
+import AppRoutes from './routes/AppRoutes';
 
-// Auth
-import Login from './pages/auth/Login';
-import TelecallerDashboard from './pages/telecaller/Dashboard';
-import MyData from './pages/telecaller/MyData';
-import BorrowerDetails from './pages/telecaller/BorrowerDetails';
-import Profile from './pages/telecaller/Profile';
-import WhatsAppMessages from './pages/telecaller/WhatsAppMessages';
-import PriorityTasks from './pages/telecaller/PriorityTasks';
+// SuperAdmin module (self-contained)
+import SuperAdminApp from './modules/superadmin/SuperAdminApp';
+import { useAuthStore } from './store/authStore';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-import type { Role } from './types';
-import { LEAD_AND_ABOVE } from './types';
+function RootApp() {
+  const { user, isAuthenticated } = useAuthStore();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
 
-// Role-based Dashboard selector
-function DashboardRouter() {
-  const { user } = useAuthStore();
-  if (user?.role === 'TELECALLER') return <TelecallerDashboard />;
-  return <div style={{ padding: '2rem' }}>Dashboard for {user?.role} is coming soon in another branch.</div>;
+  return (
+    <Routes>
+      {/* SuperAdmin gets its own isolated shell */}
+      <Route path="/superadmin/*" element={<SuperAdminApp />} />
+      {/* All other roles use the main AppRoutes */}
+      <Route path="/*" element={<AppRoutes />} />
+    </Routes>
+  );
 }
 
 function App() {
@@ -33,26 +32,8 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* Global toast notifications */}
       <ToastContainer />
-
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/login" element={<Login />} />
-        
-        {/* Protected — any role */}
-        <Route element={<Layout requiredRole="ANY" />}>
-          <Route path="/dashboard" element={<DashboardRouter />} />
-          <Route path="/my-data" element={<MyData />} />
-          <Route path="/borrower/:id" element={<BorrowerDetails />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/whatsapp-messages" element={<WhatsAppMessages />} />
-          <Route path="/priority-tasks" element={<PriorityTasks />} />
-        </Route>
-
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+      <RootApp />
     </BrowserRouter>
   );
 }

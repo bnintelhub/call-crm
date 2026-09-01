@@ -4,14 +4,16 @@ import { useAuthStore } from '../../store/authStore';
 import { socketService } from '../../services/socketService';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import MobileBottomNav from "../../components/telecaller/MobileBottomNav";
-import FloatingAction from "../../components/telecaller/FloatingAction";
+import MobileBottomNav from '../../components/telecaller/MobileBottomNav';
+import FloatingAction from '../../components/telecaller/FloatingAction';
+import FloatingSupport from '../../components/allocation/FloatingSupport';
 import './Layout.css';
 
 export default function Layout({ requiredRole }: { requiredRole?: string }) {
   const { isAuthenticated, user, token } = useAuthStore();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
 
   const isTelecallerMobile = user?.role === 'TELECALLER';
 
@@ -24,7 +26,6 @@ export default function Layout({ requiredRole }: { requiredRole?: string }) {
     }
 
     return () => {
-      // Disconnect when layout unmounts (e.g. user logs out and is redirected to /login)
       socketService.disconnect();
     };
   }, [isAuthenticated, user]);
@@ -58,18 +59,27 @@ export default function Layout({ requiredRole }: { requiredRole?: string }) {
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       
       <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-        <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <Header
+          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          onHelpClick={() => setIsSupportOpen(true)}
+        />
         
         <div className={`content-wrapper ${isTelecallerMobile ? 'has-bottom-nav' : ''}`}>
           <Outlet />
         </div>
       </main>
 
-      {/* Mobile Bottom Nav — Telecaller only */}
+      {/* Floating Support Widget (zeeshan) */}
+      <FloatingSupport
+        isOpenExternal={isSupportOpen}
+        onToggleExternal={() => setIsSupportOpen(!isSupportOpen)}
+      />
+
+      {/* Mobile Bottom Nav — Telecaller only (pankaj) */}
       <MobileBottomNav />
 
-      {/* Global Floating Action Button */}
-      <FloatingAction />
+      {/* Telecaller Floating Action Button (pankaj) */}
+      {isTelecallerMobile && <FloatingAction />}
     </div>
   );
 }
