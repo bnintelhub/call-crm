@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Megaphone, ArrowLeft, Download, RotateCw, CheckCircle2 } from 'lucide-react';
 import type { CampaignItem } from '../../data/campaignData';
 import { useCampaignStore } from '../../store/campaignStore';
+import { useAgentStore } from '../../store/agentStore';
 import CampaignStats from '../../components/campaign/CampaignStats';
 import CampaignToolbar from '../../components/campaign/CampaignToolbar';
 import CampaignTable from '../../components/campaign/CampaignTable';
@@ -15,6 +16,7 @@ import './CampaignPage.css';
 export const CampaignPage: React.FC = () => {
   const navigate = useNavigate();
   const { campaignsList, addCampaign, updateCampaign, deleteCampaign } = useCampaignStore();
+  const { agentsList } = useAgentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<CampaignCategoryTab>('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -33,11 +35,19 @@ export const CampaignPage: React.FC = () => {
     }, 3000);
   };
 
-  // Stats calculation
+  // Real Agent & Campaign Stats Calculation
   const totalCampaigns = campaignsList.length;
   const activeCampaigns = campaignsList.filter((c) => c.status === 'Running').length;
-  const totalAgents = campaignsList.reduce((acc, c) => acc + (c.agentsCount || 0), 0);
-  const onlineAgents = Math.round(totalAgents * 0.7);
+  
+  const totalAgents = agentsList.length;
+  const onlineAgents = agentsList.filter((a) => a.isOnline).length;
+  const unallocatedAgents = agentsList.filter(
+    (a) => !a.isAllocated || a.campaign === '-' || !a.campaign
+  ).length;
+  const nilAllocatedAgents = agentsList.filter(
+    (a) => a.isAllocated && (a.campaign === '-' || !a.campaign)
+  ).length;
+
   const totalCompletedAutodial = campaignsList.reduce((acc, c) => acc + (c.completedAutodial || 0), 0);
 
   // Category counts
@@ -239,8 +249,8 @@ export const CampaignPage: React.FC = () => {
         activeCampaigns={activeCampaigns}
         totalAgents={totalAgents}
         onlineAgents={onlineAgents}
-        unallocatedAgents={4}
-        nilAllocatedAgents={0}
+        unallocatedAgents={unallocatedAgents}
+        nilAllocatedAgents={nilAllocatedAgents}
         totalCompletedAutodial={totalCompletedAutodial}
       />
 

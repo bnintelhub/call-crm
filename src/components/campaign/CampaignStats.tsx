@@ -12,12 +12,12 @@ interface CampaignStatsProps {
 }
 
 export const CampaignStats: React.FC<CampaignStatsProps> = ({
-  totalAgents = 37,
-  onlineAgents = 24,
+  totalAgents = 30,
+  onlineAgents = 21,
   unallocatedAgents = 4,
   nilAllocatedAgents = 0,
   totalCampaigns = 6,
-  activeCampaigns = 3,
+  activeCampaigns = 1,
   totalCompletedAutodial = 6985,
 }) => {
   const statsList = [
