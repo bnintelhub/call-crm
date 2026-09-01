@@ -48,8 +48,8 @@
 }
 
 @media (min-width: 769px) {
-  .sa-sidebar {
-    transform: translateX(0);
+  .sa-sidebar-overlay {
+    display: none !important;
   }
 }
 
@@ -259,12 +259,12 @@
   display: flex;
   flex-direction: column;
   background-color: var(--bg-primary, #111827);
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   margin-left: 0;
 }
 
 @media (min-width: 769px) {
-  .sa-main-content {
+  .sa-main-content.sidebar-open {
     margin-left: var(--sidebar-width, 260px);
   }
 }
