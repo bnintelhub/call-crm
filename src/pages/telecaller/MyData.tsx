@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useOrgStore } from '../../store/orgStore';
 import { MessageSquare, ListTodo, AlertCircle, Search, Inbox, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const OVERVIEW_CARDS = [
@@ -73,7 +74,7 @@ export default function MyData() {
   
   const searchParams = new URLSearchParams(location.search);
   const currentTabFromUrl = searchParams.get('tab');
-  const allocator = searchParams.get('allocator');
+  const { companyName: allocator } = useOrgStore();
 
   const [activeTab, setActiveTab] = useState('All Accounts');
   
@@ -204,9 +205,9 @@ export default function MyData() {
             <button
               key={tab}
               onClick={() => {
-                let params = `?allocator=${allocator || ''}`;
-                if (tab === 'Follow up Accounts') params += '&tab=FollowUp';
-                else if (tab === 'Expired Accounts') params += '&tab=Expired';
+                let params = '';
+                if (tab === 'Follow up Accounts') params = '?tab=FollowUp';
+                else if (tab === 'Expired Accounts') params = '?tab=Expired';
                 navigate(`/my-data${params}`);
               }}
               style={{
@@ -262,7 +263,7 @@ export default function MyData() {
                 return (
                   <tr 
                     key={idx} 
-                    onClick={() => navigate(`/borrower/${row.acc}${allocator ? `?allocator=${allocator}` : ''}`, { state: row })}
+                    onClick={() => navigate(`/borrower/${row.acc}`, { state: row })}
                     style={{ 
                       borderBottom: '1px solid var(--border-subtle)', 
                       background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.01)',

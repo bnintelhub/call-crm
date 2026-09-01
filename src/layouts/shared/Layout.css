@@ -1,4 +1,4 @@
-﻿.app-container {
+.app-container {
   display: flex;
   min-height: 100vh;
   background-color: var(--bg-primary);
@@ -845,6 +845,8 @@
   min-height: 100vh;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .content-wrapper {

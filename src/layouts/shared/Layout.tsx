@@ -6,7 +6,6 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import MobileBottomNav from '../../components/telecaller/MobileBottomNav';
 import FloatingAction from '../../components/telecaller/FloatingAction';
-import FloatingSupport from '../../components/allocation/FloatingSupport';
 import './Layout.css';
 
 export default function Layout({ requiredRole }: { requiredRole?: string }) {
@@ -69,17 +68,11 @@ export default function Layout({ requiredRole }: { requiredRole?: string }) {
         </div>
       </main>
 
-      {/* Floating Support Widget (zeeshan) */}
-      <FloatingSupport
-        isOpenExternal={isSupportOpen}
-        onToggleExternal={() => setIsSupportOpen(!isSupportOpen)}
-      />
-
       {/* Mobile Bottom Nav — Telecaller only (pankaj) */}
       <MobileBottomNav />
 
-      {/* Telecaller Floating Action Button (pankaj) */}
-      {isTelecallerMobile && <FloatingAction />}
+      {/* Global Floating Action Button */}
+      <FloatingAction />
     </div>
   );
 }

@@ -280,7 +280,12 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
             <div className="brand-logo">BN</div>
             <div className="brand-text">
               <span className="brand-name">BN Associates</span>
-              <span className="brand-sub">Telecaller Portal</span>
+              <span className="brand-sub">
+                {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? 'Admin Portal' :
+                 user?.role === 'OPERATIONS_MANAGER' ? 'OM Portal' :
+                 user?.role === 'TEAM_LEAD' ? 'Supervisor Portal' :
+                 'Telecaller Portal'}
+              </span>
             </div>
           </div>
           <button className="sidebar-close-mobile" onClick={toggleSidebar}>
