@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useCampaignStore } from '../../store/campaignStore';
 import { MessageSquare, ListTodo, AlertCircle, Search, Inbox, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const OVERVIEW_CARDS = [
@@ -141,8 +142,16 @@ export default function MyData() {
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
             <span style={{ position: 'absolute', top: '-18px', left: '0', fontSize: '0.65rem', color: 'var(--text-muted)' }}>Switch campaigns</span>
-            <select style={{ padding: '0.5rem 2.5rem 0.5rem 1rem', border: '1px solid var(--border-color)', borderRadius: '0.375rem', background: 'var(--bg-card)', color: 'var(--text-primary)', appearance: 'none', minWidth: '200px' }}>
-              <option>{allocator ? `${allocator} - PREDICTIVE` : 'Select an option'}</option>
+            <select
+              style={{ padding: '0.5rem 2.5rem 0.5rem 1rem', border: '1px solid var(--border-color)', borderRadius: '0.375rem', background: 'var(--bg-card)', color: 'var(--text-primary)', appearance: 'none', minWidth: '220px' }}
+              defaultValue={allocator ? `${allocator} - PREDICTIVE` : undefined}
+            >
+              {allocator && <option value={allocator}>{allocator} - PREDICTIVE</option>}
+              {useCampaignStore.getState().campaignsList.map((camp) => (
+                <option key={camp.id} value={camp.name}>
+                  {camp.name} ({camp.category})
+                </option>
+              ))}
             </select>
             <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
           </div>

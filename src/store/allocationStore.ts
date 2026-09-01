@@ -29,13 +29,11 @@ interface AllocationState {
 
 /**
  * Format allocation name following standard convention:
- * `company name_product_bucket_year_date`
- * e.g., "Moneyview_Personal Loan_Fresh_2026_09-01"
+ * `filename_year_date`
+ * e.g., "Moneyview_Personal_Loan_2026_09-01" or "leads_npa_2026_08-30"
  */
 export const generateAllocationName = (
-  company: string = 'Moneyview',
-  product: string = 'Personal Loan',
-  bucket: string = 'Fresh',
+  fileOrBaseName: string = 'Allocation_File',
   dateInput?: string | Date
 ): string => {
   const d = dateInput ? new Date(dateInput) : new Date();
@@ -45,12 +43,12 @@ export const generateAllocationName = (
   const month = String(validDate.getMonth() + 1).padStart(2, '0');
   const day = String(validDate.getDate()).padStart(2, '0');
 
-  const cleanCompany = (company || 'Moneyview').trim();
-  const cleanProduct = (product || 'Product').trim();
-  const cleanBucket = (bucket || 'Bucket').trim();
+  let cleanName = (fileOrBaseName || 'Allocation_File').trim();
+  cleanName = cleanName.replace(/\.[^/.]+$/, ''); // remove file extension (.xlsx, .csv, etc.)
+  cleanName = cleanName.replace(/[\s-]+/g, '_'); // normalize spaces & dashes to underscores
 
-  // Naming format: company name_product_bucket_year_date
-  return `${cleanCompany}_${cleanProduct}_${cleanBucket}_${year}_${month}-${day}`;
+  // Naming format: filename_year_date
+  return `${cleanName}_${year}_${month}-${day}`;
 };
 
 export const formatOutstanding = (rawVal: string): string => {
@@ -80,6 +78,8 @@ export const formatCreatedOn = (date: Date = new Date()): string => {
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 };
 
+import { useCampaignStore } from './campaignStore';
+
 export const useAllocationStore = create<AllocationState>()(
   persist(
     (set, get) => ({
@@ -89,14 +89,12 @@ export const useAllocationStore = create<AllocationState>()(
 
       addAllocation: (payload, file, uploadedBy = 'Demo Admin') => {
         const id = `alloc-${Date.now()}`;
-        const finalName =
+        const baseFileName =
+          file?.name ||
           payload.allocationName ||
-          generateAllocationName(
-            payload.companyName || 'Moneyview',
-            payload.product,
-            payload.bucket,
-            payload.startDate
-          );
+          `${payload.companyName || 'Moneyview'}_${payload.product || 'Product'}_${payload.bucket || 'Bucket'}`;
+
+        const finalName = generateAllocationName(baseFileName, payload.startDate);
 
         const caseCounts =
           payload.caseCounts ||
@@ -133,6 +131,13 @@ export const useAllocationStore = create<AllocationState>()(
           uploadHistory: [newHistoryRecord, ...state.uploadHistory],
           lastAddedId: id,
         }));
+
+        // Automatically create and sync corresponding campaign entry
+        try {
+          useCampaignStore.getState().addCampaignFromAllocation(newAllocationItem);
+        } catch (e) {
+          console.warn('Could not sync to campaign store:', e);
+        }
 
         return newAllocationItem;
       },

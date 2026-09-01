@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Megaphone, ArrowLeft, Plus, Download, RotateCw, CheckCircle2 } from 'lucide-react';
-import { initialCampaignsData, type CampaignItem } from '../../data/campaignData';
+import { Megaphone, ArrowLeft, Download, RotateCw, CheckCircle2 } from 'lucide-react';
+import type { CampaignItem } from '../../data/campaignData';
+import { useCampaignStore } from '../../store/campaignStore';
 import CampaignStats from '../../components/campaign/CampaignStats';
 import CampaignToolbar from '../../components/campaign/CampaignToolbar';
 import CampaignTable from '../../components/campaign/CampaignTable';
@@ -13,7 +14,7 @@ import './CampaignPage.css';
 
 export const CampaignPage: React.FC = () => {
   const navigate = useNavigate();
-  const [campaignsList, setCampaignsList] = useState<CampaignItem[]>(initialCampaignsData);
+  const { campaignsList, addCampaign, updateCampaign, deleteCampaign } = useCampaignStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<CampaignCategoryTab>('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -136,15 +137,13 @@ export const CampaignPage: React.FC = () => {
 
   // Add Created Campaign
   const handleCampaignCreated = (newCamp: CampaignItem) => {
-    setCampaignsList((prev) => [newCamp, ...prev]);
+    addCampaign(newCamp);
     showToast(`Campaign "${newCamp.name}" created successfully`);
   };
 
   // Update Edited Campaign
   const handleCampaignUpdated = (updatedCamp: CampaignItem) => {
-    setCampaignsList((prev) =>
-      prev.map((c) => (c.id === updatedCamp.id ? updatedCamp : c))
-    );
+    updateCampaign(updatedCamp.id, updatedCamp);
     showToast(`Campaign "${updatedCamp.name}" updated`);
   };
 
@@ -159,9 +158,7 @@ export const CampaignPage: React.FC = () => {
       setEditingCampaign(campaign);
     } else if (action === 'toggleStatus') {
       const nextStatus = campaign.status === 'Running' ? 'Paused' : 'Running';
-      setCampaignsList((prev) =>
-        prev.map((c) => (c.id === campaign.id ? { ...c, status: nextStatus } : c))
-      );
+      updateCampaign(campaign.id, { status: nextStatus });
       showToast(`Campaign "${campaign.name}" set to ${nextStatus}`);
     } else if (action === 'duplicate') {
       const duplicated: CampaignItem = {
@@ -172,10 +169,10 @@ export const CampaignPage: React.FC = () => {
         completedAutodial: 0,
         createdAt: new Date().toISOString().split('T')[0],
       };
-      setCampaignsList((prev) => [duplicated, ...prev]);
+      addCampaign(duplicated);
       showToast(`Duplicated campaign as "${duplicated.name}"`);
     } else if (action === 'delete') {
-      setCampaignsList((prev) => prev.filter((c) => c.id !== campaign.id));
+      deleteCampaign(campaign.id);
       showToast(`Deleted campaign "${campaign.name}"`);
     }
   };
@@ -207,11 +204,12 @@ export const CampaignPage: React.FC = () => {
           <div className="campaign-heading-texts">
             <h1 className="campaign-title-text">Campaign Management</h1>
             <p className="campaign-subtitle-text">
-              Create, configure, and monitor automated dialer campaigns, agent allocations, and live call distribution.
+              Configure and monitor automated dialer campaigns, agent allocations, and live call distribution.
             </p>
           </div>
         </div>
 
+        {/* Top Header Actions (Only Refresh & Export; Create is in Toolbar) */}
         <div className="campaign-header-actions">
           <button
             type="button"
@@ -231,15 +229,6 @@ export const CampaignPage: React.FC = () => {
           >
             <Download size={15} className="header-btn-icon" />
             <span>Export</span>
-          </button>
-
-          <button
-            type="button"
-            className="btn-camp-header-primary"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <Plus size={16} />
-            <span>Create Campaign</span>
           </button>
         </div>
       </div>

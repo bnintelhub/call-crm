@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Layers, CheckCircle2, Megaphone } from 'lucide-react';
-import { initialCampaignsData } from '../../data/campaignData';
+import { useCampaignStore } from '../../store/campaignStore';
 
 interface AssignCampaignModalProps {
   isOpen: boolean;
@@ -15,8 +15,9 @@ export const AssignCampaignModal: React.FC<AssignCampaignModalProps> = ({
   onClose,
   onAssign,
 }) => {
+  const { campaignsList } = useCampaignStore();
   const [selectedCampaign, setSelectedCampaign] = useState(
-    initialCampaignsData[0]?.name || 'Q3_Recovery_High_Ticket'
+    campaignsList[0]?.name || ''
   );
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -73,13 +74,11 @@ export const AssignCampaignModal: React.FC<AssignCampaignModalProps> = ({
                 className="agent-form-input"
                 style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-input, #ffffff)', color: 'var(--text-primary)', fontSize: '0.8125rem', outline: 'none' }}
               >
-                {initialCampaignsData.map((camp) => (
+                {campaignsList.map((camp) => (
                   <option key={camp.id} value={camp.name}>
                     {camp.name} ({camp.category})
                   </option>
                 ))}
-                <option value="Special NPA Outbound">Special NPA Outbound</option>
-                <option value="Tier-1 Early Overdue Reminders">Tier-1 Early Overdue Reminders</option>
               </select>
             </div>
 

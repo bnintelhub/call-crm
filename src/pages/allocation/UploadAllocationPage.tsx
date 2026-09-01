@@ -211,6 +211,7 @@ export const UploadAllocationPage: React.FC = () => {
           onSubmit={handleSubmit}
           isFormValid={isFormValid}
           isSubmitting={isSubmitting}
+          selectedFileName={selectedFile?.name}
         />
       </div>
 

@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
-import { X, Megaphone, CheckCircle2, Zap, PlayCircle, Sliders, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Megaphone, CheckCircle2, Zap, PlayCircle, Sliders, Eye, FileSpreadsheet, Layers, Users, IndianRupee } from 'lucide-react';
 import type { CampaignItem } from '../../data/campaignData';
+import { useAllocationStore } from '../../store/allocationStore';
+import { useOrgStore } from '../../store/orgStore';
+import { generateCampaignName } from '../../store/campaignStore';
+import type { AllocationItem } from '../../data/allocationData';
 
 interface CreateCampaignModalProps {
   isOpen: boolean;
@@ -13,6 +17,17 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
   onClose,
   onCampaignCreated,
 }) => {
+  const { allocationsList, updateAllocation } = useAllocationStore();
+  const { companyName } = useOrgStore();
+
+  // Filter unallocated allocations from the allocation list page
+  const unallocatedList = allocationsList.filter(
+    (a) => a.tabCategory === 'Unallocated' || a.allocationStatus === 'Unallocated'
+  );
+
+  const [selectedAllocId, setSelectedAllocId] = useState<string>('');
+  const [selectedAlloc, setSelectedAlloc] = useState<AllocationItem | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     category: 'PREDICTIVE' as 'PREDICTIVE' | 'MANUAL' | 'PROGRESSIVE' | 'PREVIEW',
@@ -20,10 +35,32 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
     strategy: 'High Velocity Ratio 3:1',
     agentsCount: 4,
     status: 'Running' as 'Running' | 'Paused',
+    borrowerCount: 0,
   });
 
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Auto-select first unallocated batch when modal opens
+  useEffect(() => {
+    if (isOpen && unallocatedList.length > 0 && !selectedAllocId) {
+      const firstAlloc = unallocatedList[0];
+      setSelectedAllocId(firstAlloc.id);
+      setSelectedAlloc(firstAlloc);
+      const generatedName = generateCampaignName(
+        companyName,
+        firstAlloc.product,
+        firstAlloc.buckets,
+        new Date()
+      );
+      setFormData((prev) => ({
+        ...prev,
+        name: generatedName,
+        targetQueue: `${firstAlloc.product} - ${firstAlloc.buckets}`,
+        borrowerCount: firstAlloc.caseCounts,
+      }));
+    }
+  }, [isOpen, unallocatedList, companyName]);
 
   if (!isOpen) return null;
 
@@ -34,6 +71,39 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
     { id: 'PREVIEW', label: 'Preview', desc: 'Agent reviews borrower data first', icon: Eye },
   ];
 
+  // Handle choosing an unallocated batch from allocation list
+  const handleAllocationChange = (allocId: string) => {
+    setSelectedAllocId(allocId);
+    setError('');
+
+    if (!allocId || allocId === 'custom') {
+      setSelectedAlloc(null);
+      setFormData((prev) => ({
+        ...prev,
+        name: generateCampaignName(companyName, 'Personal Loan', 'Fresh', new Date()),
+        borrowerCount: 0,
+      }));
+      return;
+    }
+
+    const found = unallocatedList.find((a) => a.id === allocId);
+    if (found) {
+      setSelectedAlloc(found);
+      const generatedName = generateCampaignName(
+        companyName,
+        found.product,
+        found.buckets,
+        new Date()
+      );
+      setFormData((prev) => ({
+        ...prev,
+        name: generatedName, // company name_product_bucket_year_date
+        targetQueue: `${found.product} - ${found.buckets}`,
+        borrowerCount: found.caseCounts,
+      }));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
@@ -41,12 +111,14 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
       return;
     }
 
+    const totalBorrowers = selectedAlloc ? selectedAlloc.caseCounts : (Number(formData.borrowerCount) || 0);
+
     const newCamp: CampaignItem = {
       id: `camp-${Date.now()}`,
       name: formData.name.trim(),
       category: formData.category,
-      borrowerCount: 0,
-      leftOutBorrower: 0,
+      borrowerCount: totalBorrowers,
+      leftOutBorrower: totalBorrowers,
       contactability: 0,
       agentsCount: Number(formData.agentsCount) || 1,
       completedAutodial: 0,
@@ -54,7 +126,16 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
       createdAt: new Date().toISOString().split('T')[0],
       strategy: formData.strategy,
       targetQueue: formData.targetQueue,
+      allocationId: selectedAlloc?.id,
     };
+
+    // When assigned to campaign, move unallocated data to allocated list (100% Allocated)
+    if (selectedAlloc) {
+      updateAllocation(selectedAlloc.id, {
+        allocationStatus: 'Fully allocated',
+        tabCategory: '100% Allocated',
+      });
+    }
 
     setIsSuccess(true);
     setTimeout(() => {
@@ -62,6 +143,8 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
       setIsSuccess(false);
       onClose();
       // Reset form
+      setSelectedAllocId('');
+      setSelectedAlloc(null);
       setFormData({
         name: '',
         category: 'PREDICTIVE',
@@ -69,6 +152,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
         strategy: 'High Velocity Ratio 3:1',
         agentsCount: 4,
         status: 'Running',
+        borrowerCount: 0,
       });
     }, 700);
   };
@@ -83,7 +167,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
             </div>
             <div>
               <h3 className="campaign-modal-title">Create New Campaign</h3>
-              <p className="campaign-modal-sub">Configure live dialer parameters and agent capacity</p>
+              <p className="campaign-modal-sub">Link unallocated file and configure dialer parameters</p>
             </div>
           </div>
           <button type="button" className="campaign-modal-close" onClick={onClose}>
@@ -96,30 +180,90 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
             <div className="campaign-success-icon-box">
               <CheckCircle2 size={36} className="success-icon" />
             </div>
-            <h4>Campaign Initialized!</h4>
-            <p>"{formData.name}" has been created and set to {formData.status}.</p>
+            <h4>Campaign Created Successfully!</h4>
+            <p>"{formData.name}" initialized from unallocated list and set to {formData.status}.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="campaign-modal-form">
             {error && <div className="campaign-modal-error">{error}</div>}
 
-            {/* Campaign Name */}
+            {/* 1. Unallocated Allocation Selection Dropdown */}
+            <div className="campaign-form-group">
+              <label>
+                Source Allocation (Unallocated Batches) <span className="req-star">*</span>
+              </label>
+              <select
+                className="campaign-form-input"
+                value={selectedAllocId}
+                onChange={(e) => handleAllocationChange(e.target.value)}
+                autoFocus
+              >
+                {unallocatedList.length === 0 ? (
+                  <option value="">No unallocated files available in Allocation List</option>
+                ) : (
+                  unallocatedList.map((alloc) => (
+                    <option key={alloc.id} value={alloc.id}>
+                      {alloc.allocationName} &bull; {alloc.product} ({alloc.buckets}) &bull; {alloc.caseCounts} cases &bull; {alloc.sumOfOutstanding}
+                    </option>
+                  ))
+                )}
+                <option value="custom">-- Custom / Standalone Campaign (No File Linked) --</option>
+              </select>
+            </div>
+
+            {/* 2. Unallocated Data Summary Card */}
+            {selectedAlloc && (
+              <div className="campaign-alloc-preview-card">
+                <div className="alloc-preview-top-row">
+                  <div className="alloc-preview-file-title">
+                    <FileSpreadsheet size={16} className="alloc-preview-icon" />
+                    <strong>{selectedAlloc.allocationName}</strong>
+                  </div>
+                  <span className="alloc-badge-unallocated">
+                    {selectedAlloc.caseCounts} accounts
+                  </span>
+                </div>
+
+                <div className="alloc-preview-meta-grid">
+                  <div className="alloc-meta-cell">
+                    <span className="alloc-meta-label">Product</span>
+                    <span className="alloc-meta-val">{selectedAlloc.product}</span>
+                  </div>
+                  <div className="alloc-meta-cell">
+                    <span className="alloc-meta-label">Bucket</span>
+                    <span className="alloc-meta-val">{selectedAlloc.buckets}</span>
+                  </div>
+                  <div className="alloc-meta-cell">
+                    <span className="alloc-meta-label">Outstanding</span>
+                    <span className="alloc-meta-val">{selectedAlloc.sumOfOutstanding}</span>
+                  </div>
+                  <div className="alloc-meta-cell">
+                    <span className="alloc-meta-label">Uploaded On</span>
+                    <span className="alloc-meta-val">{selectedAlloc.createdOn}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Campaign Name */}
             <div className="campaign-form-group">
               <label>Campaign Name <span className="req-star">*</span></label>
               <input
                 type="text"
-                placeholder="e.g. Q3_Recovery_High_Ticket"
+                placeholder="e.g. Moneyview_Personal Loan_Fresh_2026_09-01"
                 value={formData.name}
                 onChange={(e) => {
                   setError('');
                   setFormData({ ...formData, name: e.target.value });
                 }}
                 className="campaign-form-input"
-                autoFocus
               />
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted, #94a3b8)', marginTop: '0.2rem', display: 'block' }}>
+                Format: <code>company name_product_bucket_year_date</code>
+              </span>
             </div>
 
-            {/* Dialing Category Cards */}
+            {/* 4. Dialing Mode Cards */}
             <div className="campaign-form-group">
               <label>Dialing Mode</label>
               <div className="campaign-mode-grid">
@@ -144,22 +288,17 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
               </div>
             </div>
 
-            {/* Grid for Queue & Strategy */}
+            {/* 5. Grid for Queue & Strategy */}
             <div className="campaign-form-grid">
               <div className="campaign-form-group">
                 <label>Target Queue</label>
-                <select
+                <input
+                  type="text"
                   value={formData.targetQueue}
                   onChange={(e) => setFormData({ ...formData, targetQueue: e.target.value })}
                   className="campaign-form-input"
-                >
-                  <option value="Tier-1 Overdue">Tier-1 Overdue</option>
-                  <option value="NPA Stage 2">NPA Stage 2</option>
-                  <option value="Fresh Allotment">Fresh Allotment</option>
-                  <option value="VIP Collections">VIP Collections</option>
-                  <option value="Bucket 1 Soft Reminders">Bucket 1 Soft Reminders</option>
-                  <option value="Manual Outreach">Manual Outreach</option>
-                </select>
+                  placeholder="e.g. Personal Loan - Fresh"
+                />
               </div>
 
               <div className="campaign-form-group">
@@ -179,7 +318,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
               </div>
             </div>
 
-            {/* Grid for Agents & Initial Status */}
+            {/* 6. Grid for Agents & Initial Status */}
             <div className="campaign-form-grid">
               <div className="campaign-form-group">
                 <label>Assigned Agents</label>
