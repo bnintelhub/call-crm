@@ -12,7 +12,7 @@ export default function FloatingAction() {
   const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (activeBreak && breakStartTime) {
       interval = setInterval(() => {
         setElapsed(Math.floor((Date.now() - breakStartTime) / 1000));

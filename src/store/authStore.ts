@@ -22,9 +22,7 @@ const mockUser: User = {
   name: 'Demo Admin',
   email: 'admin@demo.com',
   role: 'SUPER_ADMIN',
-  status: 'ACTIVE',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
+  isActive: true
 };
 
 export const useAuthStore = create<AuthState>()(

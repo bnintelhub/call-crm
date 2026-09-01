@@ -4,8 +4,8 @@ import { useAuthStore } from '../../store/authStore';
 import { socketService } from '../../services/socketService';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import MobileBottomNav from './MobileBottomNav';
-import FloatingAction from './FloatingAction';
+import MobileBottomNav from "../../components/telecaller/MobileBottomNav";
+import FloatingAction from "../../components/telecaller/FloatingAction";
 import './Layout.css';
 
 export default function Layout({ requiredRole }: { requiredRole?: string }) {

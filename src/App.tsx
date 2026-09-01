@@ -2,21 +2,17 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useThemeStore } from './store/themeStore';
 import { useAuthStore } from './store/authStore';
-import { ToastContainer } from './components/ui/Toast';
-import Layout from './components/layout/Layout';
+import { ToastContainer } from './components/shared/Toast';
+import Layout from './layouts/shared/Layout';
 
 // Auth
 import Login from './pages/auth/Login';
-// Dashboards (role-based)
-import AdminDashboard from './pages/dashboard/AdminDashboard';
-import TelecallerDashboard from './pages/dashboard/TelecallerDashboard';
-import OperationsManagerDashboard from './pages/dashboard/OperationsManagerDashboard';
-import TeamLeadDashboard from './pages/dashboard/TeamLeadDashboard';
-import MyData from './pages/dashboard/MyData';
-import BorrowerDetails from './pages/dashboard/BorrowerDetails';
-import Profile from './pages/profile/Profile';
-import WhatsAppMessages from './pages/dashboard/WhatsAppMessages';
-import PriorityTasks from './pages/dashboard/PriorityTasks';
+import TelecallerDashboard from './pages/telecaller/Dashboard';
+import MyData from './pages/telecaller/MyData';
+import BorrowerDetails from './pages/telecaller/BorrowerDetails';
+import Profile from './pages/telecaller/Profile';
+import WhatsAppMessages from './pages/telecaller/WhatsAppMessages';
+import PriorityTasks from './pages/telecaller/PriorityTasks';
 
 import type { Role } from './types';
 import { LEAD_AND_ABOVE } from './types';
@@ -25,9 +21,7 @@ import { LEAD_AND_ABOVE } from './types';
 function DashboardRouter() {
   const { user } = useAuthStore();
   if (user?.role === 'TELECALLER') return <TelecallerDashboard />;
-  if (user?.role === 'TEAM_LEAD') return <TeamLeadDashboard />;
-  if (user?.role === 'OPERATIONS_MANAGER') return <OperationsManagerDashboard />;
-  return <AdminDashboard />; // SUPER_ADMIN, ADMIN
+  return <div style={{ padding: '2rem' }}>Dashboard for {user?.role} is coming soon in another branch.</div>;
 }
 
 function App() {

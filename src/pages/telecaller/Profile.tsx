@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { Camera, Mail, Phone, Hash, Shield, KeyRound, Check, Trash2 } from 'lucide-react';
-import { toast } from '../../components/ui/Toast';
+import { toast } from '../../components/shared/Toast';
 
 export default function Profile() {
   const { user, updateUser } = useAuthStore();

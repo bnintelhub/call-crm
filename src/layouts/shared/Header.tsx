@@ -2,9 +2,9 @@ import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, LogOut, Search, Sun, Moon, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
-import NotificationBell from '../ui/NotificationBell';
-import ActivityMonitorWidget from '../monitoring/ActivityMonitorWidget';
-import Modal from '../ui/Modal';
+import NotificationBell from '../../components/shared/NotificationBell';
+import ActivityMonitorWidget from '../../components/monitoring/ActivityMonitorWidget';
+import Modal from '../../components/shared/Modal';
 import { useRef, useEffect, useState } from 'react';
 import { HelpCircle, ChevronDown } from 'lucide-react';
 
