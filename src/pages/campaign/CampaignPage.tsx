@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Megaphone, ArrowLeft, Plus, Download, RotateCw, CheckCircle2, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Megaphone, ArrowLeft, Plus, Download, RotateCw, CheckCircle2 } from 'lucide-react';
 import { initialCampaignsData, type CampaignItem } from '../../data/campaignData';
 import CampaignStats from '../../components/campaign/CampaignStats';
 import CampaignToolbar from '../../components/campaign/CampaignToolbar';
@@ -189,13 +189,6 @@ export const CampaignPage: React.FC = () => {
           <span>{toastMessage}</span>
         </div>
       )}
-
-      {/* 1. Breadcrumbs */}
-      <div className="campaign-breadcrumbs">
-        <Link to="/dashboard" className="breadcrumb-link">Dashboard</Link>
-        <ChevronRight size={14} className="breadcrumb-separator" />
-        <span className="breadcrumb-current">Campaign Management</span>
-      </div>
 
       {/* 2. Page Header Row */}
       <div className="campaign-header-row">

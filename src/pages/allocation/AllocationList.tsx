@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
-  Layers, Upload, History, Search, ChevronRight,
-  TrendingUp, CheckCircle2, Clock, IndianRupee, Zap, Sparkles
+  Layers, Upload, History, Search,
+  TrendingUp, CheckCircle2, Clock, IndianRupee, Zap, Sparkles, Check
 } from 'lucide-react';
 import AllocationTabs, { type AllocationTabType } from '../../components/allocation/AllocationTabs';
 import ActionButtons from '../../components/allocation/ActionButtons';
@@ -10,20 +10,60 @@ import AllocationTable from '../../components/allocation/AllocationTable';
 import FloatingSupport from '../../components/allocation/FloatingSupport';
 import UploadModal from '../../components/allocation/UploadModal';
 import UploadHistoryModal from '../../components/allocation/UploadHistoryModal';
-import { mockAllocations, type AllocationItem } from '../../data/allocationData';
+import { type AllocationItem } from '../../data/allocationData';
+import { useAllocationStore } from '../../store/allocationStore';
 import './AllocationList.css';
 
 export const AllocationList: React.FC = () => {
   const navigate = useNavigate();
-  const [allocationsList, setAllocationsList] = useState<AllocationItem[]>(mockAllocations);
-  const [activeTab, setActiveTab] = useState<AllocationTabType>('All Allocations');
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const { allocationsList, updateAllocation } = useAllocationStore();
+
+  const tabQuery = (searchParams.get('tab') as AllocationTabType) || (location.state as any)?.tab;
+  const initialTab: AllocationTabType =
+    tabQuery && ['All Allocations', 'Unallocated', '100% Allocated', 'Partially Allocated', 'Expiring in 5 days', 'Closed'].includes(tabQuery)
+      ? tabQuery
+      : 'All Allocations';
+
+  const [activeTab, setActiveTab] = useState<AllocationTabType>(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isUploadHistoryOpen, setIsUploadHistoryOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [targetUploadItem, setTargetUploadItem] = useState<AllocationItem | null>(null);
+  const [newlyAddedNotice, setNewlyAddedNotice] = useState<string | null>(
+    (location.state as any)?.allocationName || null
+  );
 
-  // Tab counts
+  useEffect(() => {
+    if (tabQuery && ['All Allocations', 'Unallocated', '100% Allocated', 'Partially Allocated', 'Expiring in 5 days', 'Closed'].includes(tabQuery)) {
+      setActiveTab(tabQuery);
+    }
+  }, [tabQuery]);
+
+  // Auto-dismiss newly added notice after 6 seconds
+  useEffect(() => {
+    if (newlyAddedNotice) {
+      const timer = setTimeout(() => {
+        setNewlyAddedNotice(null);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [newlyAddedNotice]);
+
+  const handleTabChange = (tab: AllocationTabType) => {
+    setActiveTab(tab);
+    if (tab === 'All Allocations') {
+      searchParams.delete('tab');
+      setSearchParams(searchParams);
+    } else {
+      setSearchParams({ tab });
+    }
+  };
+
+  // Tab counts dynamically calculated from store
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = {
       'All Allocations': allocationsList.length,
@@ -34,6 +74,24 @@ export const AllocationList: React.FC = () => {
       'Closed': allocationsList.filter((a) => a.tabCategory === 'Closed').length,
     };
     return counts;
+  }, [allocationsList]);
+
+  // Dynamic stat metrics
+  const stats = useMemo(() => {
+    const totalLeads = allocationsList.reduce((acc, curr) => acc + (curr.caseCounts || 0), 42000);
+    const unallocatedCases = allocationsList
+      .filter((a) => a.tabCategory === 'Unallocated')
+      .reduce((acc, curr) => acc + (curr.caseCounts || 0), 0);
+    const fullyAllocatedCount = allocationsList.filter((a) => a.tabCategory === '100% Allocated').length;
+    const quotaPercent = allocationsList.length > 0
+      ? Math.round((fullyAllocatedCount / allocationsList.length) * 100)
+      : 100;
+
+    return {
+      totalLeads: totalLeads.toLocaleString('en-IN'),
+      unallocatedCases: unallocatedCases.toLocaleString('en-IN'),
+      quotaPercent: `${quotaPercent}%`,
+    };
   }, [allocationsList]);
 
   // Filtered allocations based on active tab and search query
@@ -59,47 +117,21 @@ export const AllocationList: React.FC = () => {
     navigate('/allocation/upload-allocation');
   };
 
-  const handleUploadSuccess = (fileName: string) => {
+  const handleUploadSuccess = (fileName: string, createdItem?: AllocationItem) => {
     if (targetUploadItem) {
-      setAllocationsList((prev) =>
-        prev.map((item) =>
-          item.id === targetUploadItem.id
-            ? { ...item, paymentFileStatus: 'Processed' }
-            : item
-        )
-      );
-    } else {
-      const newBatch: AllocationItem = {
-        id: `alloc-${Date.now()}`,
-        allocationName: `Moneyview_Personal Loan_Fresh_${new Date().toISOString().slice(0, 10)}_${new Date().toTimeString().slice(0, 5)}`,
-        product: 'Personal Loan',
-        buckets: 'Fresh',
-        caseCounts: Math.floor(Math.random() * 400) + 50,
-        dnd: 0,
-        sumOfOutstanding: `₹${(Math.random() * 20 + 5).toFixed(1)} Lakh`,
-        createdOn: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} ${new Date().toTimeString().slice(0, 5)}`,
-        allocationStatus: 'Fully allocated',
-        collectionPercent: '0.00%',
-        paymentFileStatus: 'Upload File',
-        tabCategory: '100% Allocated',
-      };
-      setAllocationsList((prev) => [newBatch, ...prev]);
+      updateAllocation(targetUploadItem.id, { paymentFileStatus: 'Processed' });
+    } else if (createdItem) {
+      setActiveTab('Unallocated');
+      setSearchParams({ tab: 'Unallocated' });
+      setNewlyAddedNotice(createdItem.allocationName);
     }
   };
 
   return (
     <div className="allocation-list-page">
-      {/* 1. Page Header (Breadcrumbs, Title & Action Buttons) */}
+      {/* 1. Page Header (Title & Action Buttons) */}
       <div className="alloc-page-header">
         <div className="alloc-title-group">
-          <div className="alloc-breadcrumbs">
-            <Link to="/dashboard">Dashboard</Link>
-            <ChevronRight size={14} />
-            <span>IVR Call</span>
-            <ChevronRight size={14} />
-            <span className="alloc-breadcrumbs-current">Allocation List</span>
-          </div>
-
           <h1 className="alloc-page-title">
             <Layers size={26} className="alloc-title-icon" />
             Allocation list
@@ -125,7 +157,7 @@ export const AllocationList: React.FC = () => {
             <Layers size={22} />
           </div>
           <div className="alloc-stat-info">
-            <span className="alloc-stat-value">45,280</span>
+            <span className="alloc-stat-value">{stats.totalLeads}</span>
             <span className="alloc-stat-label">Total Allocated Leads</span>
           </div>
         </div>
@@ -135,7 +167,7 @@ export const AllocationList: React.FC = () => {
             <CheckCircle2 size={22} />
           </div>
           <div className="alloc-stat-info">
-            <span className="alloc-stat-value">100%</span>
+            <span className="alloc-stat-value">{stats.quotaPercent}</span>
             <span className="alloc-stat-label">Fully Allocated Quota</span>
           </div>
         </div>
@@ -145,7 +177,7 @@ export const AllocationList: React.FC = () => {
             <Clock size={22} />
           </div>
           <div className="alloc-stat-info">
-            <span className="alloc-stat-value">620</span>
+            <span className="alloc-stat-value">{stats.unallocatedCases}</span>
             <span className="alloc-stat-label">Unallocated Cases</span>
           </div>
         </div>
@@ -161,13 +193,32 @@ export const AllocationList: React.FC = () => {
         </div>
       </div>
 
+      {/* Newly Added Notice Banner */}
+      {newlyAddedNotice && (
+        <div className="alloc-alert-success" style={{ marginBottom: '1.25rem', padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <CheckCircle2 size={18} />
+            <span style={{ fontSize: '0.84375rem' }}>
+              Allocation file <strong>{newlyAddedNotice}</strong> has been uploaded and added to <strong>Unallocated</strong>!
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setNewlyAddedNotice(null)}
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.7 }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* 4. Table Panel with Tabs, Search Toolbar, and Horizontal Scroll */}
       <div className="alloc-table-panel">
         <div className="alloc-table-toolbar">
           {/* Allocation Status Tabs */}
           <AllocationTabs
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={handleTabChange}
             counts={tabCounts}
           />
 

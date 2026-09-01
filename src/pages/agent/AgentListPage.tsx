@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus, Search, Share2, Download } from 'lucide-react';
-import { mockAgentsData, type AgentItem } from '../../data/agentMockData';
+import { ArrowLeft, UserPlus, Search, Share2, Download, CheckCircle2 } from 'lucide-react';
+import { type AgentItem } from '../../data/agentMockData';
+import { useAgentStore } from '../../store/agentStore';
 import AgentSummaryCards from '../../components/agent/AgentSummaryCards';
 import AgentCategoryTabs, { type AgentTabType } from '../../components/agent/AgentCategoryTabs';
 import AgentTable from '../../components/agent/AgentTable';
@@ -11,16 +12,30 @@ import './AgentListPage.css';
 
 export const AgentListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [agentsList, setAgentsList] = useState<AgentItem[]>(mockAgentsData);
+  const { agentsList, deleteAgent, lastAddedAgentId } = useAgentStore();
   const [activeTab, setActiveTab] = useState<AgentTabType>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [newlyAddedAgent, setNewlyAddedAgent] = useState<AgentItem | null>(null);
+
+  // Auto-dismiss newly added notice
+  useEffect(() => {
+    if (newlyAddedAgent) {
+      const timer = setTimeout(() => setNewlyAddedAgent(null), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [newlyAddedAgent]);
 
   // Tab counts
   const allCount = agentsList.length;
   const fieldCount = agentsList.filter((a) => a.type === 'FIELD').length;
   const callCount = agentsList.filter((a) => a.type === 'CALL').length;
+
+  // Dynamic summary stats
+  const onlineAgentsCount = agentsList.filter((a) => a.isOnline).length;
+  const unallocatedAgentsCount = agentsList.filter((a) => !a.isAllocated).length;
+  const nilAllocatedCount = agentsList.filter((a) => a.campaign === '-' || !a.campaign).length;
 
   // Filtered agents
   const filteredAgents = useMemo(() => {
@@ -40,7 +55,9 @@ export const AgentListPage: React.FC = () => {
         agent.basePincode.includes(q) ||
         agent.residencePincode.includes(q) ||
         agent.currentAddress.toLowerCase().includes(q) ||
-        agent.permanentAddress.toLowerCase().includes(q)
+        agent.permanentAddress.toLowerCase().includes(q) ||
+        agent.experience.toLowerCase().includes(q) ||
+        agent.campaign.toLowerCase().includes(q)
       );
     });
   }, [agentsList, activeTab, searchQuery]);
@@ -60,6 +77,7 @@ export const AgentListPage: React.FC = () => {
       'Experience',
       'Campaign',
       'ACR',
+      'Role Type',
     ];
 
     const rows = filteredAgents.map((a) => [
@@ -75,6 +93,7 @@ export const AgentListPage: React.FC = () => {
       `"${a.experience}"`,
       `"${a.campaign}"`,
       `"${a.acr}"`,
+      `"${a.type}"`,
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
@@ -88,12 +107,12 @@ export const AgentListPage: React.FC = () => {
   };
 
   const handleAgentAdded = (newAgent: AgentItem) => {
-    setAgentsList((prev) => [newAgent, ...prev]);
+    setNewlyAddedAgent(newAgent);
   };
 
   const handleRowAction = (action: string, agent: AgentItem) => {
     if (action === 'deactivate') {
-      setAgentsList((prev) => prev.filter((a) => a.id !== agent.id));
+      deleteAgent(agent.id);
     } else {
       console.log(`Action: ${action} for agent:`, agent);
     }
@@ -130,12 +149,42 @@ export const AgentListPage: React.FC = () => {
         </button>
       </div>
 
+      {/* Success Alert Banner for Newly Onboarded Agent */}
+      {newlyAddedAgent && (
+        <div style={{
+          marginBottom: '1.25rem',
+          padding: '0.875rem 1.25rem',
+          background: 'rgba(16, 185, 129, 0.12)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          borderRadius: 'var(--radius-md)',
+          color: '#10b981',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.84375rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <CheckCircle2 size={18} />
+            <span>
+              Agent <strong>{newlyAddedAgent.agentName}</strong> (ID: <strong>{newlyAddedAgent.bnId}</strong>) was onboarded successfully!
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setNewlyAddedAgent(null)}
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.7 }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* 2. Agent Summary Section (4 Horizontal Boxes) */}
       <AgentSummaryCards
-        totalAgents={10}
-        onlineAgents={0}
-        unallocatedAgents={0}
-        nilAllocatedAgents={0}
+        totalAgents={agentsList.length}
+        onlineAgents={onlineAgentsCount}
+        unallocatedAgents={unallocatedAgentsCount}
+        nilAllocatedAgents={nilAllocatedCount}
       />
 
       {/* 3. Agent Category Tabs */}

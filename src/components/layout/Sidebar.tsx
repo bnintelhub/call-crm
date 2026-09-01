@@ -214,7 +214,6 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
             { path: '/my-data', label: 'My Calling Data', icon: <PhoneCall size={20} /> },
           ],
         },
-        ivrSection,
         {
           title: 'REPORTS',
           items: [

@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, CheckCircle2, FileSpreadsheet, Download } from 'lucide-react';
-import { mockUploadHistory } from '../../data/allocationData';
+import { useAllocationStore } from '../../store/allocationStore';
+import { useOrgStore } from '../../store/orgStore';
 
 interface UploadHistoryModalProps {
   isOpen: boolean;
@@ -11,6 +12,9 @@ export const UploadHistoryModal: React.FC<UploadHistoryModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { uploadHistory } = useAllocationStore();
+  const { companyName } = useOrgStore();
+
   if (!isOpen) return null;
 
   return (
@@ -20,7 +24,7 @@ export const UploadHistoryModal: React.FC<UploadHistoryModalProps> = ({
           <div>
             <h3 className="alloc-modal-title">Upload History</h3>
             <p className="alloc-modal-subtitle">
-              Audit logs of all batch allocation files uploaded to Moneyview system
+              Audit logs of all batch allocation files uploaded to {companyName} system
             </p>
           </div>
           <button type="button" className="alloc-modal-close" onClick={onClose}>
@@ -45,7 +49,7 @@ export const UploadHistoryModal: React.FC<UploadHistoryModalProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {mockUploadHistory.map((item) => (
+                {uploadHistory.map((item) => (
                   <tr key={item.id} className="alloc-table-row">
                     <td style={{ fontWeight: 600, color: 'var(--alloc-primary)' }}>{item.id}</td>
                     <td>

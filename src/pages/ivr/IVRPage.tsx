@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Layers, Headphones, MoreHorizontal, Search, Download, Plus,
   Users, UserCheck, UserMinus, Award, GraduationCap, BarChart3, Star,
   PhoneCall, Clock, CheckCircle2, AlertCircle, Play, Pause,
-  TrendingUp, FileSpreadsheet, ShieldCheck, Zap, Sparkles, ChevronRight,
+  TrendingUp, FileSpreadsheet, ShieldCheck, Zap, Sparkles,
   Volume2, MapPin, MessageSquare, Send, Smartphone, FileText
 } from 'lucide-react';
 import './IVRPage.css';
@@ -851,24 +851,6 @@ export default function IVRPage({ view: propView }: IVRPageProps) {
       {/* Page Header */}
       <div className="ivr-header">
         <div className="ivr-title-group">
-          <div className="ivr-breadcrumbs">
-            <Link to="/dashboard">Dashboard</Link>
-            <ChevronRight size={14} />
-            <span>IVR Call</span>
-            <ChevronRight size={14} />
-            <span>{config.category}</span>
-            {currentView === 'reports' && (
-              <>
-                <ChevronRight size={14} />
-                <span>Reports</span>
-              </>
-            )}
-            <ChevronRight size={14} />
-            <span className="ivr-breadcrumbs-current">
-              {currentView === 'reports' ? selectedReportType : config.title}
-            </span>
-          </div>
-
           <h1 className="ivr-title">
             {config.icon}
             {currentView === 'reports' ? selectedReportType : config.title}

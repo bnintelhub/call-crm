@@ -39,10 +39,7 @@ export const NavbarActions: React.FC<NavbarActionsProps> = ({
       <div className="nav-actions-separator" />
 
       {/* 4. Company/Organization Branding Section */}
-      <OrganizationIdentity
-        companyName="Moneyview"
-        companyLogoLetter="M"
-      />
+      <OrganizationIdentity />
 
       {/* 5. User Profile Avatar */}
       <UserAvatar

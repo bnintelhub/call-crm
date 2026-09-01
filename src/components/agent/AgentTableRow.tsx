@@ -35,9 +35,22 @@ export const AgentTableRow: React.FC<AgentTableRowProps> = ({
     <tr className="agent-table-row">
       {/* 1. Agent Name */}
       <td className="agent-cell-name">
-        <span className="agent-name-text" title={agent.agentName}>
-          {agent.agentName}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+          <span className="agent-name-text" title={agent.agentName}>
+            {agent.agentName}
+          </span>
+          <span style={{
+            fontSize: '0.65rem',
+            padding: '0.1rem 0.375rem',
+            borderRadius: '9999px',
+            fontWeight: 600,
+            background: agent.type === 'FIELD' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+            color: agent.type === 'FIELD' ? '#10b981' : '#818cf8',
+            border: agent.type === 'FIELD' ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(99, 102, 241, 0.25)',
+          }}>
+            {agent.type}
+          </span>
+        </div>
       </td>
 
       {/* 2. Supervisor */}

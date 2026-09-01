@@ -2,7 +2,9 @@ import React from 'react';
 import ProductSelect from './ProductSelect';
 import BucketSelect from './BucketSelect';
 import DateRangeField from './DateRangeField';
-import { ArrowRight, RotateCcw } from 'lucide-react';
+import { ArrowRight, FileSpreadsheet, Building2, Tag, Info } from 'lucide-react';
+import { useOrgStore } from '../../store/orgStore';
+import { generateAllocationName } from '../../store/allocationStore';
 
 export interface AllocationFormData {
   product: string;
@@ -39,6 +41,21 @@ export const AllocationForm: React.FC<AllocationFormProps> = ({
   isFormValid,
   isSubmitting,
 }) => {
+  const { companyName } = useOrgStore();
+
+  const previewDate = formData.startDate ? new Date(formData.startDate) : new Date();
+  const validDate = isNaN(previewDate.getTime()) ? new Date() : previewDate;
+  const year = validDate.getFullYear();
+  const month = String(validDate.getMonth() + 1).padStart(2, '0');
+  const day = String(validDate.getDate()).padStart(2, '0');
+
+  const liveAllocationName = generateAllocationName(
+    companyName,
+    formData.product || 'Product',
+    formData.bucket || 'Bucket',
+    formData.startDate
+  );
+
   return (
     <form onSubmit={onSubmit} className="allocation-config-form">
       <div className="form-rows-container">
@@ -79,7 +96,7 @@ export const AllocationForm: React.FC<AllocationFormProps> = ({
             <input
               type="text"
               className={`form-standard-input ${formErrors.outstanding ? 'has-error' : ''}`}
-              placeholder="Enter outstanding value"
+              placeholder="e.g. ₹35.6 Lakh or 3560000"
               value={formData.outstanding}
               onChange={(e) => onChange('outstanding', e.target.value)}
             />
@@ -106,6 +123,66 @@ export const AllocationForm: React.FC<AllocationFormProps> = ({
         </div>
       </div>
 
+      {/* 5. Live Allocation Name Preview */}
+      <div className="alloc-name-preview-card">
+        <div className="alloc-preview-top">
+          <div className="alloc-preview-title-wrap">
+            <Tag size={15} className="alloc-preview-title-icon" />
+            <span className="alloc-preview-heading">Allocation Name Preview</span>
+          </div>
+          <div className="alloc-preview-badge-group">
+            <span className="alloc-preview-org-badge" title="Retrieved from Navbar">
+              <Building2 size={12} />
+              Navbar Org: <strong>{companyName}</strong>
+            </span>
+            <span className="alloc-preview-target-badge">
+              Target: <strong>Unallocated Tab</strong>
+            </span>
+          </div>
+        </div>
+
+        <div className="alloc-preview-code-box">
+          <FileSpreadsheet size={18} className="alloc-preview-file-icon" />
+          <span className="alloc-preview-filename">{liveAllocationName}</span>
+        </div>
+
+        <div className="alloc-preview-breakdown">
+          <div className="pattern-item">
+            <span className="pattern-tag-label">Company</span>
+            <span className="pattern-pill company">{companyName}</span>
+          </div>
+          <span className="pattern-sep">_</span>
+
+          <div className="pattern-item">
+            <span className="pattern-tag-label">Product</span>
+            <span className="pattern-pill product">{formData.product || 'Product'}</span>
+          </div>
+          <span className="pattern-sep">_</span>
+
+          <div className="pattern-item">
+            <span className="pattern-tag-label">Bucket</span>
+            <span className="pattern-pill bucket">{formData.bucket || 'Bucket'}</span>
+          </div>
+          <span className="pattern-sep">_</span>
+
+          <div className="pattern-item">
+            <span className="pattern-tag-label">Year</span>
+            <span className="pattern-pill year">{year}</span>
+          </div>
+          <span className="pattern-sep">_</span>
+
+          <div className="pattern-item">
+            <span className="pattern-tag-label">Date</span>
+            <span className="pattern-pill date">{month}-{day}</span>
+          </div>
+        </div>
+
+        <div className="alloc-preview-note">
+          <Info size={13} />
+          <span>Naming pattern: <code>company name_product_bucket_year_date</code>. Reflects immediately in the <strong>Unallocated</strong> tab upon upload.</span>
+        </div>
+      </div>
+
       {/* Form Action Buttons */}
       <div className="form-actions-footer">
         <button
@@ -122,7 +199,7 @@ export const AllocationForm: React.FC<AllocationFormProps> = ({
           className="form-btn-proceed"
           disabled={isSubmitting}
         >
-          <span>{isSubmitting ? 'Validating & Uploading...' : 'Proceed'}</span>
+          <span>{isSubmitting ? 'Uploading & Allocating...' : 'Proceed & Add to Unallocated'}</span>
           {!isSubmitting && <ArrowRight size={16} />}
         </button>
       </div>

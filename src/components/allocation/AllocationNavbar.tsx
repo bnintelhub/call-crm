@@ -1,11 +1,14 @@
 import React from 'react';
 import { HelpCircle, ChevronDown } from 'lucide-react';
+import { useOrgStore } from '../../store/orgStore';
 
 interface AllocationNavbarProps {
   onOpenHelp?: () => void;
 }
 
 export const AllocationNavbar: React.FC<AllocationNavbarProps> = ({ onOpenHelp }) => {
+  const { companyName, companyLogoLetter } = useOrgStore();
+
   return (
     <header className="alloc-navbar">
       {/* Left side: Logo + Brand name */}
@@ -43,12 +46,12 @@ export const AllocationNavbar: React.FC<AllocationNavbarProps> = ({ onOpenHelp }
 
         <div className="alloc-nav-divider" />
 
-        {/* Organization Moneyview */}
-        <div className="alloc-org-badge">
+        {/* Organization Brand */}
+        <div className="alloc-org-badge" title={`Active Organization: ${companyName}`}>
           <div className="alloc-org-icon">
-            <span className="alloc-org-letter">M</span>
+            <span className="alloc-org-letter">{companyLogoLetter}</span>
           </div>
-          <span className="alloc-org-name">Moneyview</span>
+          <span className="alloc-org-name">{companyName}</span>
           <ChevronDown size={14} className="alloc-org-chevron" />
         </div>
 

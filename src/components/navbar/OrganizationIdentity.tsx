@@ -1,5 +1,6 @@
 import React from 'react';
-import { ChevronDown, Building2 } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import { useOrgStore } from '../../store/orgStore';
 
 interface OrganizationIdentityProps {
   companyName?: string;
@@ -8,10 +9,14 @@ interface OrganizationIdentityProps {
 }
 
 export const OrganizationIdentity: React.FC<OrganizationIdentityProps> = ({
-  companyName = 'Moneyview',
-  companyLogoLetter = 'M',
+  companyName: propCompanyName,
+  companyLogoLetter: propLogoLetter,
   onClick,
 }) => {
+  const storeOrg = useOrgStore();
+  const companyName = propCompanyName || storeOrg.companyName || 'Moneyview';
+  const companyLogoLetter = propLogoLetter || storeOrg.companyLogoLetter || companyName.charAt(0).toUpperCase() || 'M';
+
   return (
     <div className="nav-org-identity" onClick={onClick} title={`Organization: ${companyName}`}>
       <div className="nav-org-logo-circle">

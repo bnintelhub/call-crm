@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { X, UploadCloud, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, UploadCloud, FileText, CheckCircle2, Building2, Tag } from 'lucide-react';
 import type { AllocationItem } from '../../data/allocationData';
+import { useOrgStore } from '../../store/orgStore';
+import { useAllocationStore, generateAllocationName } from '../../store/allocationStore';
 
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   targetItem?: AllocationItem | null;
-  onSuccess?: (fileName: string) => void;
+  onSuccess?: (fileName: string, createdItem?: AllocationItem) => void;
 }
 
 export const UploadModal: React.FC<UploadModalProps> = ({
@@ -15,9 +17,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   targetItem,
   onSuccess,
 }) => {
+  const { companyName } = useOrgStore();
+  const { addAllocation } = useAllocationStore();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [productType, setProductType] = useState('Personal Loan');
-  const [bucketType, setBucketType] = useState('NPA');
+  const [bucketType, setBucketType] = useState('Fresh');
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -25,6 +29,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   if (!isOpen) return null;
 
   const isPaymentUpload = !!targetItem;
+
+  const previewName = generateAllocationName(companyName, productType, bucketType, new Date());
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -46,15 +52,28 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
     setIsUploading(true);
     setTimeout(() => {
+      let created: AllocationItem | undefined;
+      if (!isPaymentUpload) {
+        created = addAllocation(
+          {
+            companyName,
+            product: productType,
+            bucket: bucketType,
+            outstanding: '₹25.0 Lakh',
+          },
+          selectedFile
+        );
+      }
+
       setIsUploading(false);
       setUploadSuccess(true);
-      if (onSuccess) onSuccess(selectedFile.name);
+      if (onSuccess) onSuccess(selectedFile.name, created);
       setTimeout(() => {
         setUploadSuccess(false);
         setSelectedFile(null);
         onClose();
       }, 1200);
-    }, 1000);
+    }, 900);
   };
 
   return (
@@ -78,37 +97,66 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
         <form onSubmit={handleSubmit} className="alloc-modal-body">
           {!isPaymentUpload && (
-            <div className="alloc-form-row">
-              <div className="alloc-form-group">
-                <label className="alloc-form-label">Product Type</label>
-                <select
-                  className="alloc-form-select"
-                  value={productType}
-                  onChange={(e) => setProductType(e.target.value)}
-                >
-                  <option value="Personal Loan">Personal Loan</option>
-                  <option value="Credit Line">Credit Line</option>
-                  <option value="Vehicle Loan">Vehicle Loan</option>
-                  <option value="Home Improvement">Home Improvement</option>
-                </select>
+            <>
+              <div className="alloc-form-row">
+                <div className="alloc-form-group">
+                  <label className="alloc-form-label">Product Type</label>
+                  <select
+                    className="alloc-form-select"
+                    value={productType}
+                    onChange={(e) => setProductType(e.target.value)}
+                  >
+                    <option value="Personal Loan">Personal Loan</option>
+                    <option value="Credit Line">Credit Line</option>
+                    <option value="Vehicle Loan">Vehicle Loan</option>
+                    <option value="Home Improvement">Home Improvement</option>
+                  </select>
+                </div>
+
+                <div className="alloc-form-group">
+                  <label className="alloc-form-label">Delinquency Bucket</label>
+                  <select
+                    className="alloc-form-select"
+                    value={bucketType}
+                    onChange={(e) => setBucketType(e.target.value)}
+                  >
+                    <option value="Fresh">Fresh</option>
+                    <option value="Pre Due">Pre Due</option>
+                    <option value="DPD 1-30">DPD 1-30</option>
+                    <option value="DPD 31-60">DPD 31-60</option>
+                    <option value="DPD 61-90">DPD 61-90</option>
+                    <option value="NPA">NPA</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="alloc-form-group">
-                <label className="alloc-form-label">Delinquency Bucket</label>
-                <select
-                  className="alloc-form-select"
-                  value={bucketType}
-                  onChange={(e) => setBucketType(e.target.value)}
-                >
-                  <option value="Fresh">Fresh</option>
-                  <option value="Pre Due">Pre Due</option>
-                  <option value="DPD 1-30">DPD 1-30</option>
-                  <option value="DPD 31-60">DPD 31-60</option>
-                  <option value="DPD 61-90">DPD 61-90</option>
-                  <option value="NPA">NPA</option>
-                </select>
+              {/* Allocation Name Preview in Modal */}
+              <div style={{
+                padding: '0.625rem 0.875rem',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1rem',
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ color: 'var(--text-muted)' }}>
+                  Auto Naming (Navbar: <strong>{companyName}</strong>):
+                </span>
+                <span style={{
+                  fontFamily: 'monospace',
+                  fontWeight: 600,
+                  color: 'var(--accent-primary-light)',
+                  wordBreak: 'break-all',
+                }}>
+                  {previewName}
+                </span>
               </div>
-            </div>
+            </>
           )}
 
           {/* Drag & Drop Zone */}

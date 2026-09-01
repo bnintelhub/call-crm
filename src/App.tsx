@@ -1,46 +1,12 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { useThemeStore } from './store/themeStore';
-import { useAuthStore } from './store/authStore';
+import { AuthProvider } from './context/AuthContext';
+import { AppProvider } from './context/AppContext';
 import { ToastContainer } from './components/ui/Toast';
-import Layout from './components/layout/Layout';
+import AppRoutes from './routes/AppRoutes';
 
-// Auth
-import Login from './pages/auth/Login';
-// Dashboards (role-based)
-import AdminDashboard from './pages/dashboard/AdminDashboard';
-import TelecallerDashboard from './pages/dashboard/TelecallerDashboard';
-import OperationsManagerDashboard from './pages/dashboard/OperationsManagerDashboard';
-import TeamLeadDashboard from './pages/dashboard/TeamLeadDashboard';
-import IVRPage from './pages/ivr/IVRPage';
-import AllocationList from './pages/allocation/AllocationList';
-import UploadAllocationPage from './pages/allocation/UploadAllocationPage';
-import AgentListPage from './pages/agent/AgentListPage';
-import MapAgentsCampaignsPage from './pages/agent/MapAgentsCampaignsPage';
-import CampaignPage from './pages/campaign/CampaignPage';
-
-// Reports Module Pages
-import ReportsLayout from './pages/reports/ReportsLayout';
-import OneViewPage from './pages/reports/OneViewPage';
-import CCReportsPage from './pages/reports/CCReportsPage';
-import FieldReportsPage from './pages/reports/FieldReportsPage';
-import DigitalEngagementPage from './pages/reports/DigitalEngagementPage';
-import CallRecordingsPage from './pages/reports/CallRecordingsPage';
-import WhatsAppMessagesPage from './pages/reports/WhatsAppMessagesPage';
-
-import type { Role } from './types';
-import { LEAD_AND_ABOVE } from './types';
-
-// Role-based Dashboard selector
-function DashboardRouter() {
-  const { user } = useAuthStore();
-  if (user?.role === 'TELECALLER') return <TelecallerDashboard />;
-  if (user?.role === 'TEAM_LEAD') return <TeamLeadDashboard />;
-  if (user?.role === 'OPERATIONS_MANAGER') return <OperationsManagerDashboard />;
-  return <AdminDashboard />; // SUPER_ADMIN, ADMIN
-}
-
-function App() {
+export function App() {
   const { theme } = useThemeStore();
 
   useEffect(() => {
@@ -48,63 +14,14 @@ function App() {
   }, [theme]);
 
   return (
-    <BrowserRouter>
-      {/* Global toast notifications */}
-      <ToastContainer />
-
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/login" element={<Login />} />
-
-        {/* Protected layout routes */}
-        <Route element={<Layout requiredRole="ANY" />}>
-          <Route path="/dashboard" element={<DashboardRouter />} />
-          <Route path="/allocation" element={<AllocationList />} />
-          <Route path="/allocation-list" element={<AllocationList />} />
-          <Route path="/allocation/upload-allocation" element={<UploadAllocationPage />} />
-          <Route path="/upload-allocation" element={<UploadAllocationPage />} />
-          <Route path="/agents" element={<AgentListPage />} />
-          <Route path="/agent-list" element={<AgentListPage />} />
-          <Route path="/agent/map-campaigns" element={<MapAgentsCampaignsPage />} />
-          <Route path="/agents/map-campaigns" element={<MapAgentsCampaignsPage />} />
-          <Route path="/map-agents-campaigns" element={<MapAgentsCampaignsPage />} />
-          <Route path="/map-agents" element={<MapAgentsCampaignsPage />} />
-          <Route path="/ivr/agent-list" element={<AgentListPage />} />
-          <Route path="/ivr/agent-groups" element={<MapAgentsCampaignsPage />} />
-          <Route path="/ivr/map-agents" element={<MapAgentsCampaignsPage />} />
-          <Route path="/campaigns" element={<CampaignPage />} />
-          <Route path="/campaign" element={<CampaignPage />} />
-          <Route path="/ivr/campaigns" element={<CampaignPage />} />
-          <Route path="/ivr/allocation-list" element={<AllocationList />} />
-          <Route path="/ivr/upload-allocation" element={<UploadAllocationPage />} />
-          {/* Reports Module */}
-          <Route path="/reports" element={<ReportsLayout />}>
-            <Route index element={<Navigate to="/reports/one-view" replace />} />
-            <Route path="one-view" element={<OneViewPage />} />
-            <Route path="cc-reports" element={<CCReportsPage />} />
-            <Route path="field-reports" element={<FieldReportsPage />} />
-            <Route path="digital-engagement" element={<DigitalEngagementPage />} />
-            <Route path="call-recordings" element={<CallRecordingsPage />} />
-          </Route>
-          <Route path="/reports/whatsapp-messages" element={<WhatsAppMessagesPage />} />
-          <Route path="/whatsapp-messages" element={<WhatsAppMessagesPage />} />
-
-          {/* IVR Reports Route Mapping to ReportsLayout */}
-          <Route path="/ivr/reports" element={<ReportsLayout />}>
-            <Route index element={<Navigate to="/reports/one-view" replace />} />
-            <Route path="one-view" element={<OneViewPage />} />
-            <Route path="cc-reports" element={<CCReportsPage />} />
-            <Route path="field-reports" element={<FieldReportsPage />} />
-            <Route path="digital-engagement" element={<DigitalEngagementPage />} />
-            <Route path="call-recordings" element={<CallRecordingsPage />} />
-          </Route>
-          <Route path="/ivr/:tab" element={<IVRPage />} />
-        </Route>
-
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <AppProvider>
+        <BrowserRouter>
+          <ToastContainer />
+          <AppRoutes />
+        </BrowserRouter>
+      </AppProvider>
+    </AuthProvider>
   );
 }
 

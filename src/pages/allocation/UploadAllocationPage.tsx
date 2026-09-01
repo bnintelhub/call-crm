@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Upload, List, ChevronRight, FileSpreadsheet,
+  Upload, List, FileSpreadsheet,
   CheckCircle2, Sparkles, AlertCircle
 } from 'lucide-react';
 import FileUploadZone from '../../components/allocation/FileUploadZone';
@@ -10,8 +10,15 @@ import SampleFileModal from '../../components/allocation/SampleFileModal';
 import AllocationForm, { type AllocationFormData, type FormErrors } from '../../components/allocation/AllocationForm';
 import './UploadAllocationPage.css';
 
+import { useOrgStore } from '../../store/orgStore';
+import { useAllocationStore } from '../../store/allocationStore';
+import { useAuthStore } from '../../store/authStore';
+
 export const UploadAllocationPage: React.FC = () => {
   const navigate = useNavigate();
+  const { companyName } = useOrgStore();
+  const { addAllocation } = useAllocationStore();
+  const { user } = useAuthStore();
 
   const todayStr = new Date().toISOString().split('T')[0];
   const nextMonthDate = new Date();
@@ -31,6 +38,7 @@ export const UploadAllocationPage: React.FC = () => {
   const [isSampleModalOpen, setIsSampleModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [createdAllocName, setCreatedAllocName] = useState<string>('');
 
   const handleFieldChange = (field: keyof AllocationFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -103,20 +111,36 @@ export const UploadAllocationPage: React.FC = () => {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    console.log('Allocation upload submitted:', {
-      fileName: selectedFile?.name,
-      fileSize: selectedFile?.size,
-      ...formData,
-      submittedAt: new Date().toISOString(),
-    });
+
+    // Add to persistent allocation store
+    const newAllocation = addAllocation(
+      {
+        companyName,
+        product: formData.product,
+        bucket: formData.bucket,
+        outstanding: formData.outstanding,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+      },
+      selectedFile,
+      user?.name || 'Zeeshan Anwar'
+    );
+
+    setCreatedAllocName(newAllocation.allocationName);
 
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);
       setTimeout(() => {
-        navigate('/allocation');
-      }, 1400);
-    }, 1000);
+        navigate('/allocation?tab=Unallocated', {
+          state: {
+            tab: 'Unallocated',
+            newAllocId: newAllocation.id,
+            allocationName: newAllocation.allocationName,
+          },
+        });
+      }, 1200);
+    }, 800);
   };
 
   const handleCancel = () => {
@@ -128,14 +152,6 @@ export const UploadAllocationPage: React.FC = () => {
       {/* 1. Page Header */}
       <div className="upload-page-header">
         <div className="upload-title-group">
-          <div className="upload-breadcrumbs">
-            <Link to="/dashboard">Dashboard</Link>
-            <ChevronRight size={14} />
-            <Link to="/allocation">Allocation</Link>
-            <ChevronRight size={14} />
-            <span className="upload-breadcrumbs-current">Upload New File</span>
-          </div>
-
           <h1 className="upload-page-title">
             <Upload size={24} className="upload-title-icon" />
             Upload New File
@@ -160,7 +176,9 @@ export const UploadAllocationPage: React.FC = () => {
           <CheckCircle2 size={20} />
           <div>
             <strong style={{ display: 'block', fontSize: '0.875rem' }}>Allocation File Processed Successfully!</strong>
-            <span style={{ fontSize: '0.8125rem' }}>Redirecting you to the Allocation List overview...</span>
+            <span style={{ fontSize: '0.8125rem' }}>
+              Created <strong>{createdAllocName}</strong> &bull; Added to <strong>Unallocated</strong> tab. Redirecting...
+            </span>
           </div>
         </div>
       )}
