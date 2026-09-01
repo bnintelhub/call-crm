@@ -36,6 +36,8 @@ import DigitalEngagementPage from '../pages/reports/DigitalEngagementPage';
 import CallRecordingsPage from '../pages/reports/CallRecordingsPage';
 import WhatsAppMessagesPage from '../pages/reports/WhatsAppMessagesPage';
 
+import SuperAdminApp from '../modules/superadmin/SuperAdminApp';
+
 function RoleDashboardSelector() {
   const { user } = useAuthStore();
   if (user?.role === 'TELECALLER') return <TelecallerDashboard />;
@@ -54,8 +56,8 @@ export const AppRoutes: React.FC = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* SuperAdmin goes to its own module */}
-      <Route path="/superadmin/*" element={<Navigate to="/login" replace />} />
+      {/* SuperAdmin Module Router */}
+      <Route path="/superadmin/*" element={<SuperAdminApp />} />
 
       {/* Role-Specific Supervisor Router */}
       <Route path="/supervisor/*" element={<SupervisorRoutes />} />
