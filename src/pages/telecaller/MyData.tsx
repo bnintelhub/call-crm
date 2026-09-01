@@ -170,17 +170,6 @@ export default function MyData() {
         </div>
       </div>
 
-      {/* Warning Banner */}
-      {allocatorData.length === 0 && (
-        <div style={{ background: 'rgba(217, 119, 6, 0.1)', border: '1px solid rgba(217, 119, 6, 0.2)', padding: '1rem', borderRadius: '0.375rem', marginBottom: '2rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-          <AlertCircle size={20} color="#d97706" style={{ marginTop: '0.125rem' }} />
-          <div>
-            <div style={{ color: '#d97706', fontWeight: '600', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Please connect with your supervisor to assign campaign</div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{user?.employeeId || 'EMP-001'} : Currently he has not assigned any campaign to you</div>
-          </div>
-        </div>
-      )}
-
       {/* 9 Cards Section */}
       <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem' }}>
         {OVERVIEW_CARDS.map((card, idx) => (
