@@ -30,7 +30,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
   const isPaymentUpload = !!targetItem;
 
-  const previewName = generateAllocationName(companyName, productType, bucketType, new Date());
+  const previewName = generateAllocationName(
+    selectedFile?.name || `${companyName}_${productType}_${bucketType}`,
+    new Date()
+  );
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -145,7 +148,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ color: 'var(--text-muted)' }}>
-                  Auto Naming (Navbar: <strong>{companyName}</strong>):
+                  Auto Naming (<code>filename_year_date</code>):
                 </span>
                 <span style={{
                   fontFamily: 'monospace',

@@ -12,7 +12,7 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: 'dark',
+      theme: 'light',
       toggleTheme: () => {
         const newTheme = get().theme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', newTheme);
@@ -29,6 +29,8 @@ export const useThemeStore = create<ThemeState>()(
         // Apply theme on page load
         if (state) {
           document.documentElement.setAttribute('data-theme', state.theme);
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
         }
       },
     }
