@@ -16,7 +16,7 @@ export interface AllocationItem {
 export const mockAllocations: AllocationItem[] = [
   {
     id: 'alloc-1',
-    allocationName: 'Personal_Loan_NPA_2026_08-30',
+    allocationName: 'Moneyview_Personal Loan_NPA_2026-08-30_14:24',
     product: 'Personal Loan',
     buckets: 'NPA',
     caseCounts: 6,
@@ -30,7 +30,7 @@ export const mockAllocations: AllocationItem[] = [
   },
   {
     id: 'alloc-2',
-    allocationName: 'Personal_Loan_NPA_2026_08-25',
+    allocationName: 'Moneyview_Personal Loan_NPA_2026-08-25_20:10',
     product: 'Personal Loan',
     buckets: 'NPA',
     caseCounts: 6,
@@ -44,7 +44,7 @@ export const mockAllocations: AllocationItem[] = [
   },
   {
     id: 'alloc-3',
-    allocationName: 'Personal_Loan_PreDue_2026_05-28',
+    allocationName: 'Moneyview_Personal Loan_Pre Due_2026-05-28_17:09',
     product: 'Personal Loan',
     buckets: 'Pre Due',
     caseCounts: 320,
@@ -58,7 +58,7 @@ export const mockAllocations: AllocationItem[] = [
   },
   {
     id: 'alloc-4',
-    allocationName: 'Personal_Loan_DPD1-30_2026_08-28',
+    allocationName: 'Moneyview_Personal Loan_DPD 1-30_2026-08-28_11:15',
     product: 'Personal Loan',
     buckets: 'DPD 1-30',
     caseCounts: 840,
@@ -72,7 +72,7 @@ export const mockAllocations: AllocationItem[] = [
   },
   {
     id: 'alloc-5',
-    allocationName: 'Credit_Line_DPD31-60_2026_08-26',
+    allocationName: 'Moneyview_Credit Line_DPD 31-60_2026-08-26_16:40',
     product: 'Credit Line',
     buckets: 'DPD 31-60',
     caseCounts: 512,
@@ -86,7 +86,7 @@ export const mockAllocations: AllocationItem[] = [
   },
   {
     id: 'alloc-6',
-    allocationName: 'Personal_Loan_NPA_2026_08-20',
+    allocationName: 'Moneyview_Personal Loan_NPA_2026-08-20_09:30',
     product: 'Personal Loan',
     buckets: 'NPA',
     caseCounts: 140,
@@ -100,7 +100,7 @@ export const mockAllocations: AllocationItem[] = [
   },
   {
     id: 'alloc-7',
-    allocationName: 'Home_Improvement_Fresh_2026_08-31',
+    allocationName: 'Moneyview_Home Improvement_Fresh_2026-08-31_10:00',
     product: 'Personal Loan',
     buckets: 'Fresh',
     caseCounts: 620,
@@ -114,7 +114,7 @@ export const mockAllocations: AllocationItem[] = [
   },
   {
     id: 'alloc-8',
-    allocationName: 'Auto_Refinance_DPD61-90_2026_07-15',
+    allocationName: 'Moneyview_Auto Refinance_DPD 61-90_2026-07-15_18:22',
     product: 'Vehicle Loan',
     buckets: 'DPD 61-90',
     caseCounts: 95,

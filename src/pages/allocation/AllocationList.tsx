@@ -7,11 +7,11 @@ import {
 import AllocationTabs, { type AllocationTabType } from '../../components/allocation/AllocationTabs';
 import ActionButtons from '../../components/allocation/ActionButtons';
 import AllocationTable from '../../components/allocation/AllocationTable';
-import FloatingSupport from '../../components/allocation/FloatingSupport';
 import UploadModal from '../../components/allocation/UploadModal';
 import UploadHistoryModal from '../../components/allocation/UploadHistoryModal';
 import { type AllocationItem } from '../../data/allocationData';
 import { useAllocationStore } from '../../store/allocationStore';
+import { useOrgStore } from '../../store/orgStore';
 import './AllocationList.css';
 
 export const AllocationList: React.FC = () => {
@@ -20,6 +20,14 @@ export const AllocationList: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { allocationsList, updateAllocation } = useAllocationStore();
+  const { companyName } = useOrgStore();
+
+  const companyAllocations = useMemo(() => {
+    if (!companyName) return [];
+    return allocationsList.filter(item => 
+      item.allocationName.toLowerCase().startsWith(companyName.toLowerCase())
+    );
+  }, [allocationsList, companyName]);
 
   const tabQuery = (searchParams.get('tab') as AllocationTabType) || (location.state as any)?.tab;
   const initialTab: AllocationTabType =
@@ -66,25 +74,25 @@ export const AllocationList: React.FC = () => {
   // Tab counts dynamically calculated from store
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = {
-      'All Allocations': allocationsList.length,
-      'Unallocated': allocationsList.filter((a) => a.tabCategory === 'Unallocated').length,
-      '100% Allocated': allocationsList.filter((a) => a.tabCategory === '100% Allocated').length,
-      'Partially Allocated': allocationsList.filter((a) => a.tabCategory === 'Partially Allocated').length,
-      'Expiring in 5 days': allocationsList.filter((a) => a.tabCategory === 'Expiring in 5 days').length,
-      'Closed': allocationsList.filter((a) => a.tabCategory === 'Closed').length,
+      'All Allocations': companyAllocations.length,
+      'Unallocated': companyAllocations.filter((a) => a.tabCategory === 'Unallocated').length,
+      '100% Allocated': companyAllocations.filter((a) => a.tabCategory === '100% Allocated').length,
+      'Partially Allocated': companyAllocations.filter((a) => a.tabCategory === 'Partially Allocated').length,
+      'Expiring in 5 days': companyAllocations.filter((a) => a.tabCategory === 'Expiring in 5 days').length,
+      'Closed': companyAllocations.filter((a) => a.tabCategory === 'Closed').length,
     };
     return counts;
-  }, [allocationsList]);
+  }, [companyAllocations]);
 
   // Dynamic stat metrics
   const stats = useMemo(() => {
-    const totalLeads = allocationsList.reduce((acc, curr) => acc + (curr.caseCounts || 0), 42000);
-    const unallocatedCases = allocationsList
+    const totalLeads = companyAllocations.reduce((acc, curr) => acc + (curr.caseCounts || 0), 42000);
+    const unallocatedCases = companyAllocations
       .filter((a) => a.tabCategory === 'Unallocated')
       .reduce((acc, curr) => acc + (curr.caseCounts || 0), 0);
-    const fullyAllocatedCount = allocationsList.filter((a) => a.tabCategory === '100% Allocated').length;
-    const quotaPercent = allocationsList.length > 0
-      ? Math.round((fullyAllocatedCount / allocationsList.length) * 100)
+    const fullyAllocatedCount = companyAllocations.filter((a) => a.tabCategory === '100% Allocated').length;
+    const quotaPercent = companyAllocations.length > 0
+      ? Math.round((fullyAllocatedCount / companyAllocations.length) * 100)
       : 100;
 
     return {
@@ -92,11 +100,11 @@ export const AllocationList: React.FC = () => {
       unallocatedCases: unallocatedCases.toLocaleString('en-IN'),
       quotaPercent: `${quotaPercent}%`,
     };
-  }, [allocationsList]);
+  }, [companyAllocations]);
 
   // Filtered allocations based on active tab and search query
   const filteredAllocations = useMemo(() => {
-    return allocationsList.filter((item) => {
+    return companyAllocations.filter((item) => {
       const matchesTab =
         activeTab === 'All Allocations' || item.tabCategory === activeTab;
       const matchesSearch =
@@ -106,7 +114,7 @@ export const AllocationList: React.FC = () => {
         item.buckets.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesTab && matchesSearch;
     });
-  }, [activeTab, searchQuery, allocationsList]);
+  }, [activeTab, searchQuery, companyAllocations]);
 
   const handleRowUploadClick = (item: AllocationItem) => {
     setTargetUploadItem(item);

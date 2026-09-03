@@ -10,8 +10,8 @@ interface OrgState {
 export const useOrgStore = create<OrgState>()(
   persist(
     (set) => ({
-      companyName: 'Moneyview',
-      companyLogoLetter: 'M',
+      companyName: '',
+      companyLogoLetter: '',
       setOrg: (companyName, logoLetter) =>
         set({
           companyName,
@@ -19,7 +19,7 @@ export const useOrgStore = create<OrgState>()(
         }),
     }),
     {
-      name: 'design-crm-org-store',
+      name: 'design-crm-org-store-v2',
     }
   )
 );

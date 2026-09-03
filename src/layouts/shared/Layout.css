@@ -590,34 +590,6 @@
   flex-shrink: 0;
 }
 
-/* Theme Toggle Button */
-.nav-theme-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
-  padding: 0;
-}
-
-.nav-theme-btn:hover {
-  background: var(--bg-card-hover);
-  color: var(--accent-primary-light);
-  border-color: var(--border-active);
-  transform: translateY(-1px);
-}
-
-.nav-theme-icon {
-  color: inherit;
-  flex-shrink: 0;
-}
-
 /* Separator */
 .nav-actions-separator {
   width: 1px;
@@ -873,6 +845,8 @@
   min-height: 100vh;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .content-wrapper {

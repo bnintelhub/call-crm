@@ -1,9 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Megaphone, ArrowLeft, Download, RotateCw, CheckCircle2 } from 'lucide-react';
-import type { CampaignItem } from '../../data/campaignData';
-import { useCampaignStore } from '../../store/campaignStore';
-import { useAgentStore } from '../../store/agentStore';
+import { Megaphone, ArrowLeft, Plus, Download, RotateCw, CheckCircle2 } from 'lucide-react';
+import { initialCampaignsData, type CampaignItem } from '../../data/campaignData';
 import CampaignStats from '../../components/campaign/CampaignStats';
 import CampaignToolbar from '../../components/campaign/CampaignToolbar';
 import CampaignTable from '../../components/campaign/CampaignTable';
@@ -15,8 +13,7 @@ import './CampaignPage.css';
 
 export const CampaignPage: React.FC = () => {
   const navigate = useNavigate();
-  const { campaignsList, addCampaign, updateCampaign, deleteCampaign } = useCampaignStore();
-  const { agentsList } = useAgentStore();
+  const [campaignsList, setCampaignsList] = useState<CampaignItem[]>(initialCampaignsData);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<CampaignCategoryTab>('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -35,19 +32,11 @@ export const CampaignPage: React.FC = () => {
     }, 3000);
   };
 
-  // Real Agent & Campaign Stats Calculation
+  // Stats calculation
   const totalCampaigns = campaignsList.length;
   const activeCampaigns = campaignsList.filter((c) => c.status === 'Running').length;
-  
-  const totalAgents = agentsList.length;
-  const onlineAgents = agentsList.filter((a) => a.isOnline).length;
-  const unallocatedAgents = agentsList.filter(
-    (a) => !a.isAllocated || a.campaign === '-' || !a.campaign
-  ).length;
-  const nilAllocatedAgents = agentsList.filter(
-    (a) => a.isAllocated && (a.campaign === '-' || !a.campaign)
-  ).length;
-
+  const totalAgents = campaignsList.reduce((acc, c) => acc + (c.agentsCount || 0), 0);
+  const onlineAgents = Math.round(totalAgents * 0.7);
   const totalCompletedAutodial = campaignsList.reduce((acc, c) => acc + (c.completedAutodial || 0), 0);
 
   // Category counts
@@ -147,13 +136,15 @@ export const CampaignPage: React.FC = () => {
 
   // Add Created Campaign
   const handleCampaignCreated = (newCamp: CampaignItem) => {
-    addCampaign(newCamp);
+    setCampaignsList((prev) => [newCamp, ...prev]);
     showToast(`Campaign "${newCamp.name}" created successfully`);
   };
 
   // Update Edited Campaign
   const handleCampaignUpdated = (updatedCamp: CampaignItem) => {
-    updateCampaign(updatedCamp.id, updatedCamp);
+    setCampaignsList((prev) =>
+      prev.map((c) => (c.id === updatedCamp.id ? updatedCamp : c))
+    );
     showToast(`Campaign "${updatedCamp.name}" updated`);
   };
 
@@ -168,7 +159,9 @@ export const CampaignPage: React.FC = () => {
       setEditingCampaign(campaign);
     } else if (action === 'toggleStatus') {
       const nextStatus = campaign.status === 'Running' ? 'Paused' : 'Running';
-      updateCampaign(campaign.id, { status: nextStatus });
+      setCampaignsList((prev) =>
+        prev.map((c) => (c.id === campaign.id ? { ...c, status: nextStatus } : c))
+      );
       showToast(`Campaign "${campaign.name}" set to ${nextStatus}`);
     } else if (action === 'duplicate') {
       const duplicated: CampaignItem = {
@@ -179,10 +172,10 @@ export const CampaignPage: React.FC = () => {
         completedAutodial: 0,
         createdAt: new Date().toISOString().split('T')[0],
       };
-      addCampaign(duplicated);
+      setCampaignsList((prev) => [duplicated, ...prev]);
       showToast(`Duplicated campaign as "${duplicated.name}"`);
     } else if (action === 'delete') {
-      deleteCampaign(campaign.id);
+      setCampaignsList((prev) => prev.filter((c) => c.id !== campaign.id));
       showToast(`Deleted campaign "${campaign.name}"`);
     }
   };
@@ -214,12 +207,11 @@ export const CampaignPage: React.FC = () => {
           <div className="campaign-heading-texts">
             <h1 className="campaign-title-text">Campaign Management</h1>
             <p className="campaign-subtitle-text">
-              Configure and monitor automated dialer campaigns, agent allocations, and live call distribution.
+              Create, configure, and monitor automated dialer campaigns, agent allocations, and live call distribution.
             </p>
           </div>
         </div>
 
-        {/* Top Header Actions (Only Refresh & Export; Create is in Toolbar) */}
         <div className="campaign-header-actions">
           <button
             type="button"
@@ -240,6 +232,15 @@ export const CampaignPage: React.FC = () => {
             <Download size={15} className="header-btn-icon" />
             <span>Export</span>
           </button>
+
+          <button
+            type="button"
+            className="btn-camp-header-primary"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <Plus size={16} />
+            <span>Create Campaign</span>
+          </button>
         </div>
       </div>
 
@@ -249,8 +250,8 @@ export const CampaignPage: React.FC = () => {
         activeCampaigns={activeCampaigns}
         totalAgents={totalAgents}
         onlineAgents={onlineAgents}
-        unallocatedAgents={unallocatedAgents}
-        nilAllocatedAgents={nilAllocatedAgents}
+        unallocatedAgents={4}
+        nilAllocatedAgents={0}
         totalCompletedAutodial={totalCompletedAutodial}
       />
 

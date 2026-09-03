@@ -30,7 +30,6 @@ interface AllocationFormProps {
   onSubmit: (e: React.FormEvent) => void;
   isFormValid: boolean;
   isSubmitting: boolean;
-  selectedFileName?: string;
 }
 
 export const AllocationForm: React.FC<AllocationFormProps> = ({
@@ -41,7 +40,6 @@ export const AllocationForm: React.FC<AllocationFormProps> = ({
   onSubmit,
   isFormValid,
   isSubmitting,
-  selectedFileName,
 }) => {
   const { companyName } = useOrgStore();
 
@@ -51,11 +49,12 @@ export const AllocationForm: React.FC<AllocationFormProps> = ({
   const month = String(validDate.getMonth() + 1).padStart(2, '0');
   const day = String(validDate.getDate()).padStart(2, '0');
 
-  const baseFile = selectedFileName
-    ? selectedFileName.replace(/\.[^/.]+$/, '').replace(/[\s-]+/g, '_')
-    : `${companyName || 'Moneyview'}_${formData.product || 'Product'}_${formData.bucket || 'Bucket'}`.replace(/[\s-]+/g, '_');
-
-  const liveAllocationName = generateAllocationName(baseFile, formData.startDate);
+  const liveAllocationName = generateAllocationName(
+    companyName,
+    formData.product || 'Product',
+    formData.bucket || 'Bucket',
+    formData.startDate
+  );
 
   return (
     <form onSubmit={onSubmit} className="allocation-config-form">
@@ -149,8 +148,20 @@ export const AllocationForm: React.FC<AllocationFormProps> = ({
 
         <div className="alloc-preview-breakdown">
           <div className="pattern-item">
-            <span className="pattern-tag-label">File Name</span>
-            <span className="pattern-pill company">{baseFile}</span>
+            <span className="pattern-tag-label">Company</span>
+            <span className="pattern-pill company">{companyName}</span>
+          </div>
+          <span className="pattern-sep">_</span>
+
+          <div className="pattern-item">
+            <span className="pattern-tag-label">Product</span>
+            <span className="pattern-pill product">{formData.product || 'Product'}</span>
+          </div>
+          <span className="pattern-sep">_</span>
+
+          <div className="pattern-item">
+            <span className="pattern-tag-label">Bucket</span>
+            <span className="pattern-pill bucket">{formData.bucket || 'Bucket'}</span>
           </div>
           <span className="pattern-sep">_</span>
 
@@ -168,7 +179,7 @@ export const AllocationForm: React.FC<AllocationFormProps> = ({
 
         <div className="alloc-preview-note">
           <Info size={13} />
-          <span>Naming pattern: <code>filename_year_date</code>. Reflects immediately in the <strong>Unallocated</strong> tab upon upload.</span>
+          <span>Naming pattern: <code>company name_product_bucket_year_date</code>. Reflects immediately in the <strong>Unallocated</strong> tab upon upload.</span>
         </div>
       </div>
 

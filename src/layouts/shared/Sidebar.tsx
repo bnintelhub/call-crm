@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { useSuperAdminStore } from '../../modules/superadmin/store';
 import {
   LayoutDashboard, Upload, Target, Wallet, Building2, Users, BarChart3,
   PhoneCall, AlertTriangle, FileSpreadsheet, X, MessageSquare,
@@ -15,15 +14,13 @@ export interface NavSubItem {
   path?: string;
   label: string;
   icon?: React.ReactNode;
-  feature?: string | string[];
-  children?: { path: string; label: string; icon?: React.ReactNode; feature?: string | string[] }[];
+  children?: { path: string; label: string; icon?: React.ReactNode }[];
 }
 
 export interface NavItem {
   path?: string;
   label: string;
   icon: React.ReactNode;
-  feature?: string | string[];
   children?: NavSubItem[];
 }
 
@@ -37,182 +34,200 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
   const location = useLocation();
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
 
-  const impersonatedCompanyId = useSuperAdminStore((s) => s.impersonatedCompanyId);
-  const companies = useSuperAdminStore((s) => s.companies);
-
-  const activeCompany = impersonatedCompanyId
-    ? companies.find((c) => c.id === impersonatedCompanyId)
-    : (companies.length ? companies[0] : null);
-
-  const enabledFeatures = activeCompany?.features || [
-    'crm', 'allocation', 'calling', 'ivr', 'recordings', 'reports', 'whatsapp', 'field', 'ai_analytics',
-    'bulk_upload', 'ptp', 'payments', 'escalations', 'monitoring', 'call_history', 'report_one_view',
-    'report_cc', 'report_field', 'report_digital', 'quality_scoring', 'team_management', 'agent_incentives',
-    'eod_management', 'agent_training', 'sms_broadcast', 'export_data'
-  ];
-
-  const hasFeature = (f?: string | string[]) => {
-    if (!f) return true;
-    if (Array.isArray(f)) return f.some((code) => enabledFeatures.includes(code as any));
-    return enabledFeatures.includes(f as any);
-  };
-
   const getNavSections = (): NavSection[] => {
     const role = user?.role;
 
-    const ivrReportChildren = [
-      hasFeature(['report_one_view', 'reports']) && { path: '/ivr/reports/one-view', label: 'One View', icon: <Layers size={16} /> },
-      hasFeature(['report_cc', 'reports']) && { path: '/ivr/reports/cc-reports', label: 'CC Reports', icon: <PhoneCall size={16} /> },
-      hasFeature(['field', 'report_field', 'reports']) && { path: '/ivr/reports/field-reports', label: 'Field Reports', icon: <MapPin size={16} /> },
-      hasFeature(['whatsapp', 'sms_broadcast', 'report_digital', 'reports']) && { path: '/ivr/reports/digital-engagement', label: 'Digital Engagement Report', icon: <Send size={16} /> },
-      hasFeature(['recordings', 'calling']) && { path: '/ivr/reports/call-recordings', label: 'Call Recordings', icon: <Volume2 size={16} /> },
-    ].filter(Boolean) as { path: string; label: string; icon?: React.ReactNode }[];
-
-    const ivrMoreChildren = [
-      hasFeature('agent_training') && { path: '/ivr/training', label: 'Training', icon: <GraduationCap size={16} /> },
-      ivrReportChildren.length > 0 && {
-        label: 'Reports',
-        icon: <BarChart3 size={16} />,
-        children: ivrReportChildren,
-      },
-      hasFeature('quality_scoring') && { path: '/ivr/score', label: 'Score', icon: <Star size={16} /> },
-    ].filter(Boolean) as NavSubItem[];
-
-    const ivrAgentChildren = [
-      hasFeature('team_management') && { path: '/ivr/agent-list', label: 'Agent List', icon: <UserCheck size={16} /> },
-      hasFeature('team_management') && { path: '/ivr/agent-groups', label: 'Agent Groups', icon: <Users size={16} /> },
-      hasFeature(['calling', 'ivr', 'whatsapp', 'sms_broadcast']) && { path: '/ivr/campaigns', label: 'Campaigns', icon: <MessageSquare size={16} /> },
-      hasFeature('agent_incentives') && { path: '/ivr/incentives', label: 'Incentives', icon: <Award size={16} /> },
-    ].filter(Boolean) as NavSubItem[];
-
-    const ivrItems: NavItem[] = [
-      hasFeature('allocation') && {
-        label: 'Allocation',
-        icon: <Layers size={20} />,
-        children: [
-          { path: '/ivr/allocation-list', label: 'Allocation List', icon: <ClipboardList size={16} /> },
-        ],
-      },
-      ivrAgentChildren.length > 0 && {
-        label: 'Agent',
-        icon: <Headphones size={20} />,
-        children: ivrAgentChildren,
-      },
-      ivrMoreChildren.length > 0 && {
-        label: 'More',
-        icon: <MoreHorizontal size={20} />,
-        children: ivrMoreChildren,
-      },
-    ].filter(Boolean) as NavItem[];
-
-    const ivrSection: NavSection | null = ivrItems.length > 0 ? {
+    const ivrSection: NavSection = {
       title: 'IVR CALL',
-      items: ivrItems,
-    } : null;
+      items: [
+        {
+          label: 'Allocation',
+          icon: <Layers size={20} />,
+          children: [
+            { path: '/ivr/allocation-list', label: 'Allocation List', icon: <ClipboardList size={16} /> },
+          ],
+        },
+        {
+          label: 'Agent',
+          icon: <Headphones size={20} />,
+          children: [
+            { path: '/ivr/agent-list', label: 'Agent List', icon: <UserCheck size={16} /> },
+            { path: '/ivr/agent-groups', label: 'Agent Groups', icon: <Users size={16} /> },
+            { path: '/ivr/campaigns', label: 'Campaigns', icon: <MessageSquare size={16} /> },
+            { path: '/ivr/incentives', label: 'Incentives', icon: <Award size={16} /> },
+          ],
+        },
+        {
+          label: 'More',
+          icon: <MoreHorizontal size={20} />,
+          children: [
+            { path: '/ivr/training', label: 'Training', icon: <GraduationCap size={16} /> },
+            {
+              label: 'Reports',
+              icon: <BarChart3 size={16} />,
+              children: [
+                { path: '/ivr/reports/one-view', label: 'One View', icon: <Layers size={16} /> },
+                { path: '/ivr/reports/cc-reports', label: 'CC Reports', icon: <PhoneCall size={16} /> },
+                { path: '/ivr/reports/field-reports', label: 'Field Reports', icon: <MapPin size={16} /> },
+                { path: '/ivr/reports/digital-engagement', label: 'Digital Engagement Report', icon: <Send size={16} /> },
+                { path: '/ivr/reports/call-recordings', label: 'Call Recordings', icon: <Volume2 size={16} /> },
+              ],
+            },
+            { path: '/ivr/score', label: 'Score', icon: <Star size={16} /> },
+          ],
+        },
+      ],
+    };
 
     const sections: NavSection[] = [];
 
     if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
-      const mainItems: NavItem[] = [
-        hasFeature('crm') && { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-        hasFeature('reports') && { path: '/reports', label: 'Reports', icon: <BarChart3 size={20} /> },
-        hasFeature('reports') && { path: '/performance', label: 'Performance', icon: <TrendingUp size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      const monItems: NavItem[] = [
-        hasFeature('monitoring') && { path: '/monitoring', label: 'Live Monitoring', icon: <Activity size={20} /> },
-        hasFeature('eod_management') && { path: '/eod-admin', label: 'All EOD Records', icon: <ClipboardList size={20} /> },
-        hasFeature('call_history') && { path: '/call-history', label: 'Call History', icon: <History size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      const dataItems: NavItem[] = [
-        hasFeature('crm') && { path: '/companies', label: 'Companies', icon: <Building2 size={20} /> },
-        hasFeature('bulk_upload') && { path: '/bulk-upload', label: 'Bulk Upload', icon: <Upload size={20} /> },
-        hasFeature('allocation') && { path: '/allocation', label: 'Data Allocation', icon: <Target size={20} /> },
-        hasFeature('payments') && { path: '/payments', label: 'Daily Payments', icon: <Wallet size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      const commItems: NavItem[] = [
-        hasFeature(['calling', 'ivr', 'whatsapp', 'sms_broadcast']) && { path: '/campaigns', label: 'Campaigns', icon: <MessageSquare size={20} /> },
-        hasFeature('export_data') && { path: '/export', label: 'Export Data', icon: <FileSpreadsheet size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      if (mainItems.length) sections.push({ title: 'MAIN', items: mainItems });
-      if (ivrSection) sections.push(ivrSection);
-      if (monItems.length) sections.push({ title: 'MONITORING', items: monItems });
-      if (dataItems.length) sections.push({ title: 'DATA OPERATIONS', items: dataItems });
-      if (commItems.length) sections.push({ title: 'COMMUNICATION & EXPORT', items: commItems });
-      if (hasFeature('team_management')) sections.push({ title: 'SYSTEM', items: [{ path: '/users', label: 'User Management', icon: <Users size={20} /> }] });
-      sections.push({ title: 'ACCOUNT', items: [{ path: '/profile', label: 'My Profile', icon: <UserCircle size={20} /> }] });
+      sections.push(
+        {
+          title: 'MAIN',
+          items: [
+            { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+            { path: '/reports', label: 'Reports', icon: <BarChart3 size={20} /> },
+            { path: '/performance', label: 'Performance', icon: <TrendingUp size={20} /> },
+          ],
+        },
+        ivrSection,
+        {
+          title: 'MONITORING',
+          items: [
+            { path: '/monitoring', label: 'Live Monitoring', icon: <Activity size={20} /> },
+            { path: '/eod-admin', label: 'All EOD Records', icon: <ClipboardList size={20} /> },
+            { path: '/call-history', label: 'Call History', icon: <History size={20} /> },
+          ],
+        },
+        {
+          title: 'DATA OPERATIONS',
+          items: [
+            { path: '/companies', label: 'Companies', icon: <Building2 size={20} /> },
+            { path: '/bulk-upload', label: 'Bulk Upload', icon: <Upload size={20} /> },
+            { path: '/allocation', label: 'Data Allocation', icon: <Target size={20} /> },
+            { path: '/payments', label: 'Daily Payments', icon: <Wallet size={20} /> },
+          ],
+        },
+        {
+          title: 'COMMUNICATION & EXPORT',
+          items: [
+            { path: '/campaigns', label: 'Campaigns', icon: <MessageSquare size={20} /> },
+            { path: '/export', label: 'Export Data', icon: <FileSpreadsheet size={20} /> },
+          ],
+        },
+        {
+          title: 'SYSTEM',
+          items: [
+            { path: '/users', label: 'User Management', icon: <Users size={20} /> },
+          ],
+        },
+        {
+          title: 'ACCOUNT',
+          items: [
+            { path: '/profile', label: 'My Profile', icon: <UserCircle size={20} /> },
+          ],
+        }
+      );
     } else if (role === 'OPERATIONS_MANAGER') {
-      const mainItems: NavItem[] = [
-        hasFeature('crm') && { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-        hasFeature('reports') && { path: '/reports', label: 'Reports', icon: <BarChart3 size={20} /> },
-        hasFeature('reports') && { path: '/performance', label: 'Performance', icon: <TrendingUp size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      const monItems: NavItem[] = [
-        hasFeature('monitoring') && { path: '/monitoring', label: 'Live Monitoring', icon: <Activity size={20} /> },
-        hasFeature('eod_management') && { path: '/eod-admin', label: 'All EOD Records', icon: <ClipboardList size={20} /> },
-        hasFeature('eod_management') && { path: '/eod-om-generate', label: 'Generate My EOD', icon: <FilePlus size={20} /> },
-        hasFeature('call_history') && { path: '/call-history', label: 'Call History', icon: <History size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      const opItems: NavItem[] = [
-        hasFeature('allocation') && { path: '/allocation', label: 'Data Allocation', icon: <Target size={20} /> },
-        hasFeature('team_management') && { path: '/users', label: 'Team Management', icon: <Users size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      if (mainItems.length) sections.push({ title: 'MAIN', items: mainItems });
-      if (ivrSection) sections.push(ivrSection);
-      if (monItems.length) sections.push({ title: 'MONITORING', items: monItems });
-      if (opItems.length) sections.push({ title: 'OPERATIONS', items: opItems });
-      sections.push({ title: 'ACCOUNT', items: [{ path: '/profile', label: 'My Profile', icon: <UserCircle size={20} /> }] });
+      sections.push(
+        {
+          title: 'MAIN',
+          items: [
+            { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+            { path: '/reports', label: 'Reports', icon: <BarChart3 size={20} /> },
+            { path: '/performance', label: 'Performance', icon: <TrendingUp size={20} /> },
+          ],
+        },
+        ivrSection,
+        {
+          title: 'MONITORING',
+          items: [
+            { path: '/monitoring', label: 'Live Monitoring', icon: <Activity size={20} /> },
+            { path: '/eod-admin', label: 'All EOD Records', icon: <ClipboardList size={20} /> },
+            { path: '/eod-om-generate', label: 'Generate My EOD', icon: <FilePlus size={20} /> },
+            { path: '/call-history', label: 'Call History', icon: <History size={20} /> },
+          ],
+        },
+        {
+          title: 'OPERATIONS',
+          items: [
+            { path: '/allocation', label: 'Data Allocation', icon: <Target size={20} /> },
+            { path: '/users', label: 'Team Management', icon: <Users size={20} /> },
+          ],
+        },
+        {
+          title: 'ACCOUNT',
+          items: [
+            { path: '/profile', label: 'My Profile', icon: <UserCircle size={20} /> },
+          ],
+        }
+      );
     } else if (role === 'TEAM_LEAD') {
-      const mainItems: NavItem[] = [
-        hasFeature('crm') && { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-        hasFeature('calling') && { path: '/my-data', label: 'My Calling Data', icon: <PhoneCall size={20} /> },
-        hasFeature('reports') && { path: '/reports', label: 'Reports', icon: <BarChart3 size={20} /> },
-        hasFeature('team_management') && { path: '/team-performance', label: 'Team Performance', icon: <Users size={20} /> },
-        hasFeature('reports') && { path: '/performance', label: 'Performance Analytics', icon: <TrendingUp size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      const monItems: NavItem[] = [
-        hasFeature('monitoring') && { path: '/monitoring', label: 'Live Monitoring', icon: <Activity size={20} /> },
-        hasFeature('eod_management') && { path: '/eod-team', label: 'Team EOD Records', icon: <ClipboardList size={20} /> },
-        hasFeature('eod_management') && { path: '/eod-tl-submit', label: 'Submit Team EOD', icon: <Send size={20} /> },
-        hasFeature('call_history') && { path: '/call-history', label: 'Call History', icon: <History size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      const opItems: NavItem[] = [
-        hasFeature('allocation') && { path: '/allocation', label: 'Data Allocation', icon: <Target size={20} /> },
-        hasFeature('escalations') && { path: '/escalations', label: 'Escalations', icon: <AlertTriangle size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      const commItems: NavItem[] = [
-        hasFeature(['calling', 'ivr', 'whatsapp', 'sms_broadcast']) && { path: '/campaigns', label: 'Campaigns', icon: <MessageSquare size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      if (mainItems.length) sections.push({ title: 'MAIN', items: mainItems });
-      if (ivrSection) sections.push(ivrSection);
-      if (monItems.length) sections.push({ title: 'MONITORING', items: monItems });
-      if (opItems.length) sections.push({ title: 'OPERATIONS', items: opItems });
-      if (commItems.length) sections.push({ title: 'COMMUNICATION', items: commItems });
-      sections.push({ title: 'ACCOUNT', items: [{ path: '/profile', label: 'My Profile', icon: <UserCircle size={20} /> }] });
+      sections.push(
+        {
+          title: 'MAIN',
+          items: [
+            { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+            { path: '/my-data', label: 'My Calling Data', icon: <PhoneCall size={20} /> },
+            { path: '/reports', label: 'Reports', icon: <BarChart3 size={20} /> },
+            { path: '/team-performance', label: 'Team Performance', icon: <Users size={20} /> },
+            { path: '/performance', label: 'Performance Analytics', icon: <TrendingUp size={20} /> },
+          ],
+        },
+        ivrSection,
+        {
+          title: 'MONITORING',
+          items: [
+            { path: '/monitoring', label: 'Live Monitoring', icon: <Activity size={20} /> },
+            { path: '/eod-team', label: 'Team EOD Records', icon: <ClipboardList size={20} /> },
+            { path: '/eod-tl-submit', label: 'Submit Team EOD', icon: <Send size={20} /> },
+            { path: '/call-history', label: 'Call History', icon: <History size={20} /> },
+          ],
+        },
+        {
+          title: 'OPERATIONS',
+          items: [
+            { path: '/allocation', label: 'Data Allocation', icon: <Target size={20} /> },
+            { path: '/escalations', label: 'Escalations', icon: <AlertTriangle size={20} /> },
+          ],
+        },
+        {
+          title: 'COMMUNICATION',
+          items: [
+            { path: '/campaigns', label: 'Campaigns', icon: <MessageSquare size={20} /> },
+          ],
+        },
+        {
+          title: 'ACCOUNT',
+          items: [
+            { path: '/profile', label: 'My Profile', icon: <UserCircle size={20} /> },
+          ],
+        }
+      );
     } else if (role === 'TELECALLER') {
-      const mainItems: NavItem[] = [
-        hasFeature('crm') && { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-        hasFeature('calling') && { path: '/my-data', label: 'My Calling Data', icon: <PhoneCall size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      const repItems: NavItem[] = [
-        hasFeature('call_history') && { path: '/call-history', label: 'Call History', icon: <History size={20} /> },
-        hasFeature('eod_management') && { path: '/eod-submit', label: 'Submit EOD', icon: <ClipboardList size={20} /> },
-      ].filter(Boolean) as NavItem[];
-
-      if (mainItems.length) sections.push({ title: 'MAIN', items: mainItems });
-      if (repItems.length) sections.push({ title: 'REPORTS', items: repItems });
-      sections.push({ title: 'ACCOUNT', items: [{ path: '/profile', label: 'My Profile', icon: <UserCircle size={20} /> }] });
+      sections.push(
+        {
+          title: 'MAIN',
+          items: [
+            { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+            { path: '/my-data', label: 'My Calling Data', icon: <PhoneCall size={20} /> },
+          ],
+        },
+        {
+          title: 'REPORTS',
+          items: [
+            { path: '/call-history', label: 'Call History', icon: <History size={20} /> },
+            { path: '/eod-submit', label: 'Submit EOD', icon: <ClipboardList size={20} /> },
+          ],
+        },
+        {
+          title: 'ACCOUNT',
+          items: [
+            { path: '/profile', label: 'My Profile', icon: <UserCircle size={20} /> },
+          ],
+        }
+      );
     }
 
     return sections;
@@ -265,7 +280,12 @@ export default function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; to
             <div className="brand-logo">BN</div>
             <div className="brand-text">
               <span className="brand-name">BN Associates</span>
-              <span className="brand-sub">Telecaller Portal</span>
+              <span className="brand-sub">
+                {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? 'Admin Portal' :
+                 user?.role === 'OPERATIONS_MANAGER' ? 'OM Portal' :
+                 user?.role === 'TEAM_LEAD' ? 'Supervisor Portal' :
+                 'Telecaller Portal'}
+              </span>
             </div>
           </div>
           <button className="sidebar-close-mobile" onClick={toggleSidebar}>

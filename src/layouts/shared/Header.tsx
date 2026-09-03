@@ -109,11 +109,7 @@ export default function Header({ toggleSidebar, onHelpClick }: HeaderProps) {
         <div className="header-greeting">
           <span className="greeting-text">{getGreeting()},</span>
           <span className="greeting-name">{user?.name}</span>
-          {user?.role && (
-            <span className={`badge ${roleBadgeClass[user.role] || 'badge-info'}`} style={{ marginLeft: '0.5rem', fontSize: '0.65rem' }}>
-              <Shield size={9} /> {user.role.replace('_', ' ')}
-            </span>
-          )}
+
         </div>
       </div>
 

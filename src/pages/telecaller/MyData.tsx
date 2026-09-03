@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { useCampaignStore } from '../../store/campaignStore';
+import { useOrgStore } from '../../store/orgStore';
 import { MessageSquare, ListTodo, AlertCircle, Search, Inbox, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const OVERVIEW_CARDS = [
@@ -74,7 +74,7 @@ export default function MyData() {
   
   const searchParams = new URLSearchParams(location.search);
   const currentTabFromUrl = searchParams.get('tab');
-  const allocator = searchParams.get('allocator');
+  const { companyName: allocator } = useOrgStore();
 
   const [activeTab, setActiveTab] = useState('All Accounts');
   
@@ -142,16 +142,8 @@ export default function MyData() {
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
             <span style={{ position: 'absolute', top: '-18px', left: '0', fontSize: '0.65rem', color: 'var(--text-muted)' }}>Switch campaigns</span>
-            <select
-              style={{ padding: '0.5rem 2.5rem 0.5rem 1rem', border: '1px solid var(--border-color)', borderRadius: '0.375rem', background: 'var(--bg-card)', color: 'var(--text-primary)', appearance: 'none', minWidth: '220px' }}
-              defaultValue={allocator ? `${allocator} - PREDICTIVE` : undefined}
-            >
-              {allocator && <option value={allocator}>{allocator} - PREDICTIVE</option>}
-              {useCampaignStore.getState().campaignsList.map((camp) => (
-                <option key={camp.id} value={camp.name}>
-                  {camp.name} ({camp.category})
-                </option>
-              ))}
+            <select style={{ padding: '0.5rem 2.5rem 0.5rem 1rem', border: '1px solid var(--border-color)', borderRadius: '0.375rem', background: 'var(--bg-card)', color: 'var(--text-primary)', appearance: 'none', minWidth: '200px' }}>
+              <option>{allocator ? `${allocator} - PREDICTIVE` : 'Select an option'}</option>
             </select>
             <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
           </div>
@@ -169,6 +161,17 @@ export default function MyData() {
           </button>
         </div>
       </div>
+
+      {/* Warning Banner */}
+      {allocatorData.length === 0 && (
+        <div style={{ background: 'rgba(217, 119, 6, 0.1)', border: '1px solid rgba(217, 119, 6, 0.2)', padding: '1rem', borderRadius: '0.375rem', marginBottom: '2rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+          <AlertCircle size={20} color="#d97706" style={{ marginTop: '0.125rem' }} />
+          <div>
+            <div style={{ color: '#d97706', fontWeight: '600', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Please connect with your supervisor to assign campaign</div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{user?.employeeId || 'EMP-001'} : Currently he has not assigned any campaign to you</div>
+          </div>
+        </div>
+      )}
 
       {/* 9 Cards Section */}
       <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem' }}>
@@ -202,9 +205,9 @@ export default function MyData() {
             <button
               key={tab}
               onClick={() => {
-                let params = `?allocator=${allocator || ''}`;
-                if (tab === 'Follow up Accounts') params += '&tab=FollowUp';
-                else if (tab === 'Expired Accounts') params += '&tab=Expired';
+                let params = '';
+                if (tab === 'Follow up Accounts') params = '?tab=FollowUp';
+                else if (tab === 'Expired Accounts') params = '?tab=Expired';
                 navigate(`/my-data${params}`);
               }}
               style={{
@@ -260,7 +263,7 @@ export default function MyData() {
                 return (
                   <tr 
                     key={idx} 
-                    onClick={() => navigate(`/borrower/${row.acc}${allocator ? `?allocator=${allocator}` : ''}`, { state: row })}
+                    onClick={() => navigate(`/borrower/${row.acc}`, { state: row })}
                     style={{ 
                       borderBottom: '1px solid var(--border-subtle)', 
                       background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.01)',

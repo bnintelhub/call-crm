@@ -2,13 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Search, ArrowUpDown, ChevronDown,
-  Inbox, CheckCircle2, Edit2, MoreHorizontal, Trash2,
-  UserPlus, Users, Plus
+  Inbox, CheckCircle2, Edit2, MoreHorizontal, Trash2
 } from 'lucide-react';
 import AssignCampaignModal from '../../components/agent/AssignCampaignModal';
-import CreateGroupModal from '../../components/agent/CreateGroupModal';
-import EditGroupModal from '../../components/agent/EditGroupModal';
-import EditUngroupedAgentModal from '../../components/agent/EditUngroupedAgentModal';
 import './MapAgentsCampaignsPage.css';
 
 export interface AgentGroupMappingItem {
@@ -19,8 +15,6 @@ export interface AgentGroupMappingItem {
   campaign: string;
   status?: string;
   type: 'GROUP' | 'UNGROUPED';
-  assignedAgentIds?: string[];
-  description?: string;
 }
 
 const initialGroupsData: AgentGroupMappingItem[] = [
@@ -32,7 +26,6 @@ const initialGroupsData: AgentGroupMappingItem[] = [
     campaign: 'Kalyani Kumari Recovery',
     status: 'Active',
     type: 'GROUP',
-    assignedAgentIds: ['agent-1', 'agent-2', 'agent-3', 'agent-4', 'agent-5', 'agent-6', 'agent-7', 'agent-8'],
   },
   {
     id: 'grp-2',
@@ -42,7 +35,6 @@ const initialGroupsData: AgentGroupMappingItem[] = [
     campaign: 'demo_npa_escalation',
     status: 'Active',
     type: 'GROUP',
-    assignedAgentIds: ['agent-9', 'agent-10', 'agent-11', 'agent-12', 'agent-13', 'agent-14'],
   },
   {
     id: 'grp-3',
@@ -52,7 +44,6 @@ const initialGroupsData: AgentGroupMappingItem[] = [
     campaign: 'Moneyview_NPA_Batch3',
     status: 'Active',
     type: 'GROUP',
-    assignedAgentIds: ['agent-15', 'agent-16', 'agent-17', 'agent-18'],
   },
   {
     id: 'grp-4',
@@ -62,7 +53,6 @@ const initialGroupsData: AgentGroupMappingItem[] = [
     campaign: 'Money_new_x_p',
     status: 'Active',
     type: 'GROUP',
-    assignedAgentIds: ['agent-19', 'agent-20', 'agent-1', 'agent-2'],
   },
   {
     id: 'grp-5',
@@ -72,7 +62,6 @@ const initialGroupsData: AgentGroupMappingItem[] = [
     campaign: 'Early_Bucket_Reminders',
     status: 'Active',
     type: 'GROUP',
-    assignedAgentIds: ['agent-3', 'agent-4', 'agent-5', 'agent-6'],
   },
   {
     id: 'grp-6',
@@ -82,7 +71,6 @@ const initialGroupsData: AgentGroupMappingItem[] = [
     campaign: '-',
     status: 'Active',
     type: 'GROUP',
-    assignedAgentIds: ['agent-7', 'agent-8', 'agent-9'],
   },
 ];
 
@@ -95,7 +83,6 @@ const initialUngroupedData: AgentGroupMappingItem[] = [
     campaign: '-',
     status: 'Active',
     type: 'UNGROUPED',
-    assignedAgentIds: ['agent-1'],
   },
   {
     id: 'ungrp-2',
@@ -105,7 +92,6 @@ const initialUngroupedData: AgentGroupMappingItem[] = [
     campaign: 'Kalyani Kumari Recovery',
     status: 'Active',
     type: 'UNGROUPED',
-    assignedAgentIds: ['agent-2'],
   },
   {
     id: 'ungrp-3',
@@ -115,7 +101,6 @@ const initialUngroupedData: AgentGroupMappingItem[] = [
     campaign: '-',
     status: 'Active',
     type: 'UNGROUPED',
-    assignedAgentIds: ['agent-3'],
   },
   {
     id: 'ungrp-4',
@@ -125,7 +110,6 @@ const initialUngroupedData: AgentGroupMappingItem[] = [
     campaign: 'demo_npa_escalation',
     status: 'Active',
     type: 'UNGROUPED',
-    assignedAgentIds: ['agent-4'],
   },
 ];
 
@@ -139,18 +123,15 @@ export const MapAgentsCampaignsPage: React.FC = () => {
   const [groupsList, setGroupsList] = useState<AgentGroupMappingItem[]>(initialGroupsData);
   const [ungroupedList, setUngroupedList] = useState<AgentGroupMappingItem[]>(initialUngroupedData);
 
-  // Modals & Dialogs
+  // Modals & Toast
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState<AgentGroupMappingItem | null>(null);
-  const [editingUngroupedAgent, setEditingUngroupedAgent] = useState<AgentGroupMappingItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
-    }, 3200);
+    }, 3000);
   };
 
   // Active dataset
@@ -187,7 +168,6 @@ export const MapAgentsCampaignsPage: React.FC = () => {
     );
   };
 
-  // Assign Campaign to selected
   const handleAssignCampaigns = (campaignName: string) => {
     if (activeTab === 'Agent Groups') {
       setGroupsList((prev) =>
@@ -202,66 +182,8 @@ export const MapAgentsCampaignsPage: React.FC = () => {
         )
       );
     }
-    showToast(`Campaign assigned to ${selectedIds.length} items successfully`);
+    showToast(`Campaign assigned to ${selectedIds.length} items`);
     setSelectedIds([]);
-  };
-
-  // Create Group
-  const handleCreateGroup = (newGroup: AgentGroupMappingItem) => {
-    setGroupsList((prev) => [newGroup, ...prev]);
-    showToast(`Group "${newGroup.name}" created with ${newGroup.agentsCount} agents!`);
-  };
-
-  // Edit Group Save
-  const handleEditGroupSave = (updatedGroup: AgentGroupMappingItem) => {
-    setGroupsList((prev) =>
-      prev.map((grp) => (grp.id === updatedGroup.id ? updatedGroup : grp))
-    );
-    showToast(`Group "${updatedGroup.name}" updated successfully!`);
-  };
-
-  // Delete Group
-  const handleDeleteGroup = (groupId: string) => {
-    const deleted = groupsList.find((g) => g.id === groupId);
-    setGroupsList((prev) => prev.filter((grp) => grp.id !== groupId));
-    showToast(`Group "${deleted?.name || 'Group'}" removed successfully`);
-  };
-
-  // Assign Ungrouped Agent into a group
-  const handleAssignUngroupedToGroup = (
-    agentItem: AgentGroupMappingItem,
-    targetGroupId: string
-  ) => {
-    // Remove from ungrouped list
-    setUngroupedList((prev) => prev.filter((u) => u.id !== agentItem.id));
-
-    // Add to group list
-    setGroupsList((prev) =>
-      prev.map((grp) => {
-        if (grp.id === targetGroupId) {
-          const currentIds = grp.assignedAgentIds || [];
-          return {
-            ...grp,
-            agentsCount: grp.agentsCount + 1,
-            assignedAgentIds: [...currentIds, agentItem.id],
-          };
-        }
-        return grp;
-      })
-    );
-
-    const targetGroup = groupsList.find((g) => g.id === targetGroupId);
-    showToast(`Added ${agentItem.name} to "${targetGroup?.name || 'Group'}"!`);
-  };
-
-  // Update Ungrouped Agent Campaign
-  const handleUpdateUngroupedCampaign = (agentItemId: string, campaignName: string) => {
-    setUngroupedList((prev) =>
-      prev.map((item) =>
-        item.id === agentItemId ? { ...item, campaign: campaignName } : item
-      )
-    );
-    showToast('Agent campaign updated successfully!');
   };
 
   const handleFinishAssignment = () => {
@@ -289,30 +211,19 @@ export const MapAgentsCampaignsPage: React.FC = () => {
               type="button"
               className="map-back-btn"
               onClick={() => navigate('/agents')}
-              title="Back to Agents"
+              title="Back"
             >
               <ArrowLeft size={17} />
             </button>
             <div className="map-title-wrap">
               <h1 className="map-page-title">Map Agents to Campaigns</h1>
               <p className="map-page-subtitle">
-                Assign agents or agent groups to campaigns. Create groups, add/remove members, and manage campaign assignments.
+                Assign agents or agent groups to campaigns. View, edit or delete campaigns from here.
               </p>
             </div>
           </div>
 
-          {/* Right Header Actions: Create Group (Just before Finish Assign) */}
           <div className="map-header-right">
-            <button
-              type="button"
-              className="btn-create-group"
-              onClick={() => setIsCreateGroupModalOpen(true)}
-              title="Create a new agent group"
-            >
-              <UserPlus size={15} />
-              <span>Create Group</span>
-            </button>
-
             <button
               type="button"
               className="btn-finish-assignment"
@@ -335,7 +246,7 @@ export const MapAgentsCampaignsPage: React.FC = () => {
                 setSelectedIds([]);
               }}
             >
-              Agent Groups ({groupsList.length})
+              Agent Groups
             </button>
 
             <button
@@ -346,7 +257,7 @@ export const MapAgentsCampaignsPage: React.FC = () => {
                 setSelectedIds([]);
               }}
             >
-              Ungrouped Agents ({ungroupedList.length})
+              Ungrouped Agents
             </button>
           </div>
 
@@ -357,7 +268,7 @@ export const MapAgentsCampaignsPage: React.FC = () => {
               <input
                 type="text"
                 className="map-search-input"
-                placeholder="Search groups, campaigns, or agents..."
+                placeholder="Search account number,"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -396,7 +307,7 @@ export const MapAgentsCampaignsPage: React.FC = () => {
                     />
                   </th>
 
-                  {/* 2. Agent Group / Agent Name */}
+                  {/* 2. Agent Group */}
                   <th className="map-th-main">
                     <div className="map-th-content">
                       <span>{activeTab === 'Agent Groups' ? 'Agent Group' : 'Agent Name'}</span>
@@ -428,17 +339,10 @@ export const MapAgentsCampaignsPage: React.FC = () => {
                     </div>
                   </th>
 
-                  {/* 6. Action Column (Assign) */}
+                  {/* 6. Action */}
                   <th className="map-th-action">
                     <div className="map-th-content">
                       <span>Action</span>
-                    </div>
-                  </th>
-
-                  {/* 7. Edit Column (Supervisor can edit group & add/remove agents) */}
-                  <th className="map-th-edit">
-                    <div className="map-th-content">
-                      <span>Edit</span>
                     </div>
                   </th>
                 </tr>
@@ -466,21 +370,12 @@ export const MapAgentsCampaignsPage: React.FC = () => {
 
                         {/* Agent Group / Agent Name */}
                         <td className="map-td-main">
-                          <div className="map-group-name-cell">
-                            {row.type === 'GROUP' ? (
-                              <div className="map-group-icon-avatar">
-                                <Users size={14} />
-                              </div>
-                            ) : null}
-                            <span className="map-row-title">{row.name}</span>
-                          </div>
+                          <span className="map-row-title">{row.name}</span>
                         </td>
 
                         {/* Agents Count */}
                         <td className="map-td-count">
-                          <span className="map-row-count">
-                            {row.agentsCount} {row.agentsCount === 1 ? 'Agent' : 'Agents'}
-                          </span>
+                          <span className="map-row-count">{row.agentsCount}</span>
                         </td>
 
                         {/* Collections */}
@@ -497,7 +392,7 @@ export const MapAgentsCampaignsPage: React.FC = () => {
                           )}
                         </td>
 
-                        {/* Action (Assign) */}
+                        {/* Action */}
                         <td className="map-td-action">
                           <button
                             type="button"
@@ -511,52 +406,16 @@ export const MapAgentsCampaignsPage: React.FC = () => {
                             Assign
                           </button>
                         </td>
-
-                        {/* Edit Column (Edit Group / Add & Remove Agents) */}
-                        <td className="map-td-edit">
-                          {row.type === 'GROUP' ? (
-                            <button
-                              type="button"
-                              className="map-row-edit-btn"
-                              onClick={() => setEditingGroup(row)}
-                              title={`Edit Group "${row.name}" and manage agents`}
-                            >
-                              <Edit2 size={12} />
-                              <span>Edit</span>
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="map-row-edit-btn ungrouped-edit-btn"
-                              onClick={() => setEditingUngroupedAgent(row)}
-                              title={`Manage agent ${row.name}`}
-                            >
-                              <Edit2 size={12} />
-                              <span>Manage</span>
-                            </button>
-                          )}
-                        </td>
                       </tr>
                     );
                   })
                 ) : (
-                  /* 6. Empty State */
+                  /* 6. Empty State: Vertically Centered "No data" */
                   <tr>
-                    <td colSpan={7} className="map-table-empty-cell">
+                    <td colSpan={6} className="map-table-empty-cell">
                       <div className="map-empty-state-wrap">
                         <Inbox size={32} className="map-empty-icon" />
-                        <span className="map-empty-text">No data found</span>
-                        {activeTab === 'Agent Groups' && (
-                          <button
-                            type="button"
-                            className="btn-create-group"
-                            style={{ marginTop: '0.5rem' }}
-                            onClick={() => setIsCreateGroupModalOpen(true)}
-                          >
-                            <UserPlus size={14} />
-                            <span>Create First Group</span>
-                          </button>
-                        )}
+                        <span className="map-empty-text">No data</span>
                       </div>
                     </td>
                   </tr>
@@ -567,42 +426,15 @@ export const MapAgentsCampaignsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 1. Assign Campaign Modal */}
+      {/* Assign Campaign Modal */}
       <AssignCampaignModal
         isOpen={isAssignModalOpen}
         selectedCount={selectedIds.length}
         onClose={() => setIsAssignModalOpen(false)}
         onAssign={handleAssignCampaigns}
       />
-
-      {/* 2. Create Group Modal */}
-      <CreateGroupModal
-        isOpen={isCreateGroupModalOpen}
-        onClose={() => setIsCreateGroupModalOpen(false)}
-        onCreateGroup={handleCreateGroup}
-      />
-
-      {/* 3. Edit Group Modal (Add/Remove Agents, Group Name, Campaign) */}
-      <EditGroupModal
-        isOpen={!!editingGroup}
-        group={editingGroup}
-        onClose={() => setEditingGroup(null)}
-        onSave={handleEditGroupSave}
-        onDelete={handleDeleteGroup}
-      />
-
-      {/* 4. Manage Ungrouped Agent Modal */}
-      <EditUngroupedAgentModal
-        isOpen={!!editingUngroupedAgent}
-        agentItem={editingUngroupedAgent}
-        groupsList={groupsList}
-        onClose={() => setEditingUngroupedAgent(null)}
-        onAssignToGroup={handleAssignUngroupedToGroup}
-        onUpdateAgentCampaign={handleUpdateUngroupedCampaign}
-      />
     </div>
   );
 };
 
 export default MapAgentsCampaignsPage;
-
