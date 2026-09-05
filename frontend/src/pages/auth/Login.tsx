@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, ShieldAlert } from 'lucide-react';
 import { toast } from '../../components/shared/Toast';
 import { authService } from '../../services/authService';
 import './Login.css';
@@ -14,6 +14,22 @@ export default function Login() {
   const [email, setEmail] = useState('admin@bnsinghassociates.com');
   const [password, setPassword] = useState('Admin@123');
   const [loading, setLoading] = useState(false);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    const notice = sessionStorage.getItem('auth_notice');
+    const params = new URLSearchParams(location.search);
+    const reason = params.get('reason');
+
+    if (notice) {
+      setAuthNotice(notice);
+      sessionStorage.removeItem('auth_notice');
+    } else if (reason === 'deactivated') {
+      setAuthNotice('Your account has been deactivated. Please contact your supervisor or administrator.');
+    } else if (reason === 'session_expired') {
+      setAuthNotice('Your session has expired or was revoked. Please sign in again.');
+    }
+  }, [location.search]);
 
   // If redirecting from a protected route, preserve it, else default to /dashboard
   const from = location.state?.from?.pathname || '/dashboard';
@@ -62,6 +78,26 @@ export default function Login() {
         </div>
         <h1 className="login-title">Welcome Back</h1>
         <p className="login-subtitle">Sign in to BN Associates Portal</p>
+
+        {authNotice && (
+          <div style={{
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #F87171',
+            color: '#991B1B',
+            padding: '12px 14px',
+            borderRadius: '8px',
+            marginBottom: '18px',
+            fontSize: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            lineHeight: '1.4',
+            textAlign: 'left'
+          }}>
+            <ShieldAlert size={22} style={{ flexShrink: 0, color: '#DC2626' }} />
+            <span>{authNotice}</span>
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="login-form">
           <div className="form-group">

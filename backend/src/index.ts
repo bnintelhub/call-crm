@@ -1,8 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import { apiRateLimiter } from './middlewares/rateLimiter.js';
 import { initDatabase } from './database/initDb.js';
 
 dotenv.config();
@@ -10,7 +13,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middlewares
+// Security Middlewares
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allows assets/CORS cross-origin
+}));
 app.use(cors({
   origin: true,
   credentials: true,
@@ -18,13 +24,17 @@ app.use(cors({
 app.use(express.json());
 app.use(morgan('dev'));
 
+// General Rate Limiter for all API routes
+app.use('/api', apiRateLimiter);
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'bnorbit-crm-backend', time: new Date().toISOString() });
 });
 
-// Auth Routes
+// Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Global 404 handler for unknown API routes
 app.use('/api', (req, res) => {

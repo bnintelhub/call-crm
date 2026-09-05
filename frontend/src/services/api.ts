@@ -22,14 +22,28 @@ function getUploadHeaders(): HeadersInit {
 }
 
 async function handleResponse(res: Response) {
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    // ✅ Auto-logout if token is invalid/expired — redirect to login
-    if (res.status === 401 && (data.error === 'Invalid token.' || data.error === 'Invalid token or inactive user.')) {
+    const isLoginEndpoint = typeof window !== 'undefined' && window.location.pathname.startsWith('/login');
+
+    // 🛑 Account Deactivation Guard (HTTP 403)
+    if (res.status === 403 && (data.code === 'ACCOUNT_DEACTIVATED' || data.code === 'COMPANY_SUSPENDED' || data.code === 'ACTIVATION_KEY_DEACTIVATED' || (typeof data.error === 'string' && data.error.toLowerCase().includes('deactivated')))) {
       localStorage.removeItem('bn-crm-auth');
-      window.location.href = '/login';
-      throw new Error('Session expired. Please login again.');
+      sessionStorage.setItem('auth_notice', data.error || 'Your account has been deactivated. Please contact your administrator.');
+      if (!isLoginEndpoint) {
+        window.location.href = '/login?reason=deactivated';
+      }
+      throw new Error(data.error || 'Account deactivated.');
     }
+
+    // 🛑 Session Revocation or Expired Token (HTTP 401)
+    if (res.status === 401 && !isLoginEndpoint) {
+      localStorage.removeItem('bn-crm-auth');
+      sessionStorage.setItem('auth_notice', data.error || 'Your session has expired. Please login again.');
+      window.location.href = '/login?reason=session_expired';
+      throw new Error(data.error || 'Session expired. Please login again.');
+    }
+
     throw new Error(data.error || 'Something went wrong');
   }
   return data;
